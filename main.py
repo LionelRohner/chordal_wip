@@ -1,13 +1,27 @@
-class Scale:
-    scales_dict = {
-        "major": [0, 1, 1, 0.5, 1, 1, 1, 0.5],
-        # basically minor is a rotation of major, like all other modes
-        # therefor make generic
-        "minor": [0, 1, 1, 0.5, 1, 1, 0.5, 1],
-    }
-    scales_dict = {key: [x * 2 for x in value] for key, value in scales_dict.items()}
+from itertools import accumulate
+import numpy as np
 
-    notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"] * 3
+
+def rotate_list(a, n):
+    return np.concatenate((a[-n:], a[:-n]))
+
+
+class Scale:
+    # Start at 0 (equals root), then move by 2 (whole-step) or 1 (half-step)
+    church_modes_dist = [0, 2, 2, 1, 2, 2, 2, 1]
+
+    # rotations of church_modes_dist yield all modes
+    scales_dict = {
+        "ionian": church_modes_dist,
+        "dorian": rotate_list(church_modes_dist, 1),
+        "phyrgian": rotate_list(church_modes_dist, 2),
+        "lydian": rotate_list(church_modes_dist, 3),
+        "mixolydian": rotate_list(church_modes_dist, 4),
+        "aeolian": rotate_list(church_modes_dist, 5),
+        "locrian": rotate_list(church_modes_dist, 6),
+    }
+
+    all_notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"] * 3
 
     def __init__(self, root_note, scale_type):
         self.root_note = root_note
@@ -15,9 +29,11 @@ class Scale:
         self.notes = self.generate_scale()
 
     def generate_scale(self):
-        print(self.notes)
-        # scale = Scale.scales_dict[self.scale_type]
-        # continue here
+        print(Scale.scales_dict)
+        scale_dist = Scale.scales_dict["ionian"]
+        print(scale_dist)
+        # scale_chars = [accumulate(scale_dist)]
+        # print(scale_chars)
 
 
 class Chord:
@@ -42,7 +58,7 @@ class ChordProgressionGenerator:
 
 
 # Example usage
-scale = Scale("C", "major")
+scale = Scale("C", "ionian")
 # print(scale.scales_dict)
 
 
