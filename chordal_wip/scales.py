@@ -12,7 +12,7 @@ class Scale:
 
     # rotations of church_modes_dist yield all modes
     scales_dict = {
-        "ionian": church_modes_dist,
+        "ionian": np.array(church_modes_dist),
         "dorian": rotate_list(church_modes_dist, 1),
         "phyrgian": rotate_list(church_modes_dist, 2),
         "lydian": rotate_list(church_modes_dist, 3),
@@ -20,8 +20,9 @@ class Scale:
         "aeolian": rotate_list(church_modes_dist, 5),
         "locrian": rotate_list(church_modes_dist, 6),
     }
-
-    all_notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"] * 3
+    all_notes = np.tile(
+        np.array(["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]), 3
+    )
 
     def __init__(self, root_note, scale_type):
         self.root_note = root_note
@@ -29,12 +30,11 @@ class Scale:
         self.notes = self.generate_scale()
 
     def generate_scale(self):
-        pass
-        #print(Scale.scales_dict)
-        #scale_dist = Scale.scales_dict["ionian"]
-        #print(scale_dist)
-        # scale_chars = [accumulate(scale_dist)]
-        # print(scale_chars)
+        # print(Scale.scales_dict)
+        scale_dist = Scale.scales_dict["ionian"]
+        scale_ind = np.cumsum(scale_dist)[:-1]
+        scale_chars = Scale.all_notes[scale_ind]
+        return scale_chars
 
 
 class Chord:
@@ -55,5 +55,5 @@ class ChordProgressionGenerator:
         self.scale = scale
 
     def get_chord_progression(self):
-        print(self.scale)
-
+        pass
+        # print(self.scale)
