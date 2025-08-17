@@ -1,9 +1,12 @@
-from chordal_wip.scales import Scale, rotate_list
+from chordal_wip.scales import Scale, Chord
 
 
 scale_ref = Scale("C", "ionian")
-print(scale_ref.notes)
+print("C ionian:", scale_ref.notes)
+
+chord_generator = Chord(scale_ref)
+# print(chord_generator)
 
 
 scale = Scale("F#", "mixolydian")
-print(scale.notes)
+print("F mixolydian:", scale.notes)

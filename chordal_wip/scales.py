@@ -28,63 +28,132 @@ def rotate_list(arr, n, dir="left"):
 
 
 class Scale:
-    # Start at 0 (equals root), then move by 2 (whole-step) or 1 (half-step)
-    church_modes_dist = [2, 2, 1, 2, 2, 2, 1]
+    """A class to represent musical scales, specifically church modes derived from the major scale."""
 
-    # rotations of church_modes_dist yield all modes
-    scales_dict = {
-        "ionian": np.array(church_modes_dist),
-        "dorian": rotate_list(church_modes_dist, 1),
-        "phyrgian": rotate_list(church_modes_dist, 2),
-        "lydian": rotate_list(church_modes_dist, 3),
-        "mixolydian": rotate_list(church_modes_dist, 4),
-        "aeolian": rotate_list(church_modes_dist, 5),
-        "locrian": rotate_list(church_modes_dist, 6),
-    }
-    # tiling needed? if yes use np.tile(arr, number of repeats)
-    # use bs instead of # for minor modes?
-    all_notes = np.array(
+    ALL_NOTES = np.array(
         ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
     )
 
-    def __init__(self, root_note, scale_type):
-        self.root_note = root_note
-        self.all_notes_rot = self.set_root()
-        self.scale_type = scale_type
-        self.notes = self.generate_scale()
+    # Distance between intervalls in diatonic sclae, i.e. 2 (whole-step) or 1 (half-step)
+    DIATONIC_INTERVALS = np.array([2, 2, 1, 2, 2, 2, 1])
 
-    def set_root(self):
-        n_rot = np.where(Scale.all_notes == self.root_note)[0][0]
-        all_notes_rot = rotate_list(Scale.all_notes, n_rot)
+    scales_dict = {
+        "ionian": DIATONIC_INTERVALS,
+        "dorian": rotate_list(DIATONIC_INTERVALS, 1),
+        "phyrgian": rotate_list(DIATONIC_INTERVALS, 2),
+        "lydian": rotate_list(DIATONIC_INTERVALS, 3),
+        "mixolydian": rotate_list(DIATONIC_INTERVALS, 4),
+        "aeolian": rotate_list(DIATONIC_INTERVALS, 5),
+        "locrian": rotate_list(DIATONIC_INTERVALS, 6),
+    }
+
+    def __init__(self, root_note, scale_type):
+        if root_note not in self.ALL_NOTES:
+            raise ValueError(
+                f"Invalid root note: {root_note}. Must be one of {self.ALL_NOTES}."
+            )
+        if scale_type not in self.scales_dict:
+            raise ValueError(
+                f"Invalid scale type: {scale_type}. Must be one of {list(self.scales_dict.keys())}."
+            )
+        self.root_note = root_note
+        self.scale_type = scale_type
+        self.rotated_notes = self.rotate_notes()
+
+    def rotate_notes(self):
+        """Return all notes rotated to start at the root note."""
+        n_rot = np.where(Scale.ALL_NOTES == self.root_note)[0][0]
+        all_notes_rot = rotate_list(Scale.ALL_NOTES, n_rot)
         return all_notes_rot
 
-    def generate_scale(self):
+    @property
+    def notes(self):
+        """Return the notes of the scale."""
         scale_dist = Scale.scales_dict[self.scale_type]
-        # print("scale_dist:", scale_dist)
-        scale_ind = np.cumsum(scale_dist)[:-1]
-        scale_ind_w_root = np.concatenate(([0], scale_ind))
-        # print("scale_ind:", scale_ind_w_root)
-        scale_chars = self.all_notes_rot[scale_ind_w_root]
+        scale_indices = np.cumsum(scale_dist)[:-1]
+        scale_indices_with_root = np.concatenate(([0], scale_indices))
+        scale_chars = self.rotated_notes[scale_indices_with_root]
         return scale_chars
 
 
 class Chord:
-    def __init__(self, root_note, chord_type):
-        self.root_note = root_note
-        self.chord_type = chord_type
+    # Define chord formulas as distances from the root (in semitones)
+    CHORD_FORMULAS = {
+        "major": [0, 4, 7],       # Root, major 3rd, perfect 5th
+        "minor": [0, 3, 7],       # Root, minor 3rd, perfect 5th
+        "major7": [0, 4, 7, 11],  # Root, major 3rd, perfect 5th, major 7th
+        "minor7": [0, 3, 7, 10],  # Root, minor 3rd, perfect 5th, minor 7th
+        "dominant7": [0, 4, 7, 10],  # Root, major 3rd, perfect 5th, minor 7th
+        # Add more chord types as needed
+    }
 
-    def display_chord(self):
-        pass
+    # Define chord qualities for each scale degree in each mode
+    IONIAN_BASE_CHORDS = ["major", "minor", "minor", "major", "major", "minor", "diminished"]
+    MODE_CHORDS = {
+        "ionian": IONIAN_BASE_CHORDS,
+        "dorian": rotate_list(IONIAN_BASE_CHORDS, 1),
+        "phyrgian": rotate_list(IONIAN_BASE_CHORDS, 2),
+        "lydian": rotate_list(IONIAN_BASE_CHORDS, 3),
+        "mixolydian": rotate_list(IONIAN_BASE_CHORDS, 4),
+        "aeolian": rotate_list(IONIAN_BASE_CHORDS, 5),
+        "locrian": rotate_list(IONIAN_BASE_CHORDS, 6)
+    }
 
+    # Map chord types to their suffixes for naming
+    CHORD_SUFFIX = {
+        "major": "maj",
+        "minor": "min",
+        "major7": "maj7",
+        "minor7": "min7",
+        "dominant7": "7",
+        "diminished": "dim",
+    }
 
-class Mode(Scale):
-    pass
-
-
-class ChordProgressionGenerator:
     def __init__(self, scale):
         self.scale = scale
+        self.root_note = scale.root_note
+        self.scale_type = scale.scale_type
+        self.notes = scale.notes  # Notes of the scale (e.g., ['C', 'D', 'E', 'F', 'G', 'A', 'B'])
+        self.chord_progression = self.generate_chord_progression()
+        # self.chord_qualities = self.MODE_CHORD_QUALITIES[self.scale_type]
 
-    def get_chord_progression(self):
-        pass
-        # print(self.scale)
+    def generate_chord_progression(self):
+        print(self.scale.notes)
+        print(self.scale.notes)
+
+
+    # def get_chord(self, degree, chord_type=None):
+    #     """
+    #     Get the notes of a chord for a given scale degree.
+    #     Args:
+    #         degree: Scale degree (1-7, where 1 is the root).
+    #         chord_type: Optional. If None, uses the diatonic chord quality for the mode.
+    #     Returns:
+    #         List of notes in the chord.
+    #     """
+    #     if chord_type is None:
+    #         chord_type = self.chord_qualities[degree - 1]
+    #
+    #     # Get the root note of the chord (e.g., degree=1 -> self.notes[0])
+    #     chord_root = self.notes[degree - 1]
+    #
+    #     # Find the index of the chord root in the full list of notes (ALL_NOTES)
+    #     root_index_in_all_notes = np.where(self.scale.ALL_NOTES == chord_root)[0][0]
+    #
+    #     # Calculate the indices of the chord notes in ALL_NOTES
+    #     chord_note_indices = [(root_index_in_all_notes + interval) % 12 for interval in self.CHORD_FORMULAS[chord_type]]
+    #
+    #     # Get the chord notes from ALL_NOTES
+    #     chord_notes = self.scale.ALL_NOTES[chord_note_indices]
+    #
+    #     return chord_notes
+    #
+    # def get_chord_progression(self, progression):
+    #     """
+    #     Get the notes for a chord progression (e.g., [1, 4, 5]).
+    #     Args:
+    #         progression: List of scale degrees (e.g., [1, 4, 5]).
+    #     Returns:
+    #         List of chords (each chord is a list of notes).
+    #     """
+    #     return [self.get_chord(degree) for degree in progression]
