@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.char import index
 
 
 def rotate_list(arr, n, dir="left"):
@@ -58,9 +59,9 @@ class Scale:
             )
         self.root_note = root_note
         self.scale_type = scale_type
-        self.rotated_notes = self.rotate_notes()
+        self.rotated_notes = self._rotate_notes()
 
-    def rotate_notes(self):
+    def _rotate_notes(self):
         """Return all notes rotated to start at the root note."""
         n_rot = np.where(Scale.ALL_NOTES == self.root_note)[0][0]
         all_notes_rot = rotate_list(Scale.ALL_NOTES, n_rot)
@@ -79,48 +80,78 @@ class Scale:
 class Chord:
     # Define chord formulas as distances from the root (in semitones)
     CHORD_FORMULAS = {
-        "major": [0, 4, 7],       # Root, major 3rd, perfect 5th
-        "minor": [0, 3, 7],       # Root, minor 3rd, perfect 5th
-        "major7": [0, 4, 7, 11],  # Root, major 3rd, perfect 5th, major 7th
-        "minor7": [0, 3, 7, 10],  # Root, minor 3rd, perfect 5th, minor 7th
-        "dominant7": [0, 4, 7, 10],  # Root, major 3rd, perfect 5th, minor 7th
+        "maj": [0, 4, 7],  # Root, major 3rd, perfect 5th
+        "min": [0, 3, 7],  # Root, minor 3rd, perfect 5th
+        "maj7": [0, 4, 7, 11],  # Root, major 3rd, perfect 5th, major 7th
+        "min7": [0, 3, 7, 10],  # Root, minor 3rd, perfect 5th, minor 7th
+        "7": [0, 4, 7, 10],  # Root, major 3rd, perfect 5th, minor 7th
         # Add more chord types as needed
     }
 
     # Define chord qualities for each scale degree in each mode
-    IONIAN_BASE_CHORDS = ["major", "minor", "minor", "major", "major", "minor", "diminished"]
-    MODE_CHORDS = {
-        "ionian": IONIAN_BASE_CHORDS,
-        "dorian": rotate_list(IONIAN_BASE_CHORDS, 1),
-        "phyrgian": rotate_list(IONIAN_BASE_CHORDS, 2),
-        "lydian": rotate_list(IONIAN_BASE_CHORDS, 3),
-        "mixolydian": rotate_list(IONIAN_BASE_CHORDS, 4),
-        "aeolian": rotate_list(IONIAN_BASE_CHORDS, 5),
-        "locrian": rotate_list(IONIAN_BASE_CHORDS, 6)
-    }
+    IONIAN_BASE_CHORDS = [
+        "maj",
+        "min",
+        "min",
+        "maj",
+        "maj",
+        "min",
+        "dim",
+    ]
+    IONIAN_7_CHORDS = ["maj7", "min7", "min7", "maj7", "7", "min7", "min7♭5"]
 
-    # Map chord types to their suffixes for naming
-    CHORD_SUFFIX = {
-        "major": "maj",
-        "minor": "min",
-        "major7": "maj7",
-        "minor7": "min7",
-        "dominant7": "7",
-        "diminished": "dim",
+    MODE_CHORDS = {
+        "ionian": {
+            "triads": IONIAN_BASE_CHORDS,
+            "7ths": IONIAN_7_CHORDS,
+        },
+        "dorian": {
+            "triads": rotate_list(IONIAN_BASE_CHORDS, 1),
+            "7ths": rotate_list(IONIAN_7_CHORDS, 1),
+        },
+        "phrygian": {
+            "triads": rotate_list(IONIAN_BASE_CHORDS, 2),
+            "7ths": rotate_list(IONIAN_7_CHORDS, 2),
+        },
+        "lydian": {
+            "triads": rotate_list(IONIAN_BASE_CHORDS, 3),
+            "7ths": rotate_list(IONIAN_7_CHORDS, 3),
+        },
+        "mixolydian": {
+            "triads": rotate_list(IONIAN_BASE_CHORDS, 4),
+            "7ths": rotate_list(IONIAN_7_CHORDS, 4),
+        },
+        "aeolian": {
+            "triads": rotate_list(IONIAN_BASE_CHORDS, 5),
+            "7ths": rotate_list(IONIAN_7_CHORDS, 5),
+        },
+        "locrian": {
+            "triads": rotate_list(IONIAN_BASE_CHORDS, 6),
+            "7ths": rotate_list(IONIAN_7_CHORDS, 6),
+        },
     }
 
     def __init__(self, scale):
         self.scale = scale
         self.root_note = scale.root_note
         self.scale_type = scale.scale_type
-        self.notes = scale.notes  # Notes of the scale (e.g., ['C', 'D', 'E', 'F', 'G', 'A', 'B'])
-        self.chord_progression = self.generate_chord_progression()
+        self.notes = scale.notes
+        self.chord_base_progression = self.generate_chord_progression(
+            chord_quality="triads"
+        )
+        self.chord_7th_progression = self.generate_chord_progression(
+            chord_quality="7ths"
+        )
         # self.chord_qualities = self.MODE_CHORD_QUALITIES[self.scale_type]
 
-    def generate_chord_progression(self):
-        print(self.scale.notes)
-        print(self.scale.notes)
+    def generate_chord_progression(self, chord_quality):
+        chord_progression = np.char.add(
+            self.scale.notes, Chord.MODE_CHORDS[self.scale_type][chord_quality]
+        )
+        return chord_progression
 
+    def roman_numerals(self):
+        pass
 
     # def get_chord(self, degree, chord_type=None):
     #     """
