@@ -135,23 +135,16 @@ class Chord:
         self.root_note = scale.root_note
         self.scale_type = scale.scale_type
         self.notes = scale.notes
-        self.chord_base_progression = self.generate_chord_progression(
-            chord_quality="triads"
-        )
-        self.chord_7th_progression = self.generate_chord_progression(
-            chord_quality="7ths"
-        )
+        self.chords_triad = self.generate_chords(chord_quality="triads")
+        self.chords_7th = self.generate_chords(chord_quality="7ths")
         self.chord_roman_numerals = Chord.MODE_CHORDS[scale.scale_type]["roman"]
         # self.chord_qualities = self.MODE_CHORD_QUALITIES[self.scale_type]
 
-    def generate_chord_progression(self, chord_quality):
+    def generate_chords(self, chord_quality):
         chord_progression = np.char.add(
             self.scale.notes, Chord.MODE_CHORDS[self.scale_type][chord_quality]
         )
         return chord_progression
-
-    def roman_numerals(self):
-        pass
 
     # def get_chord(self, degree, chord_type=None):
     #     """
@@ -188,3 +181,11 @@ class Chord:
     #         List of chords (each chord is a list of notes).
     #     """
     #     return [self.get_chord(degree) for degree in progression]
+
+
+class ChordProgression:
+    def __init__(self, progression):
+        self.progression = self.generate_chord_progression()
+
+    def generate_chord_progression(self):
+        pass
