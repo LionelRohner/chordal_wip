@@ -88,7 +88,7 @@ class Chord:
         # Add more chord types as needed
     }
 
-    # Define chord qualities for each scale degree in each mode
+    # We need ionian triads and 7th chord to generate all chords for the modes using rotations
     IONIAN_BASE_CHORDS = ["maj", "min", "min", "maj", "maj", "min", "dim"]
     IONIAN_7_CHORDS = ["maj7", "min7", "min7", "maj7", "7", "min7", "min7♭5"]
 
@@ -129,6 +129,16 @@ class Chord:
             "roman": ["i°", "♭II", "♭iii", "iv", "♭V♭VI", "♭vii"],
         },
     }
+
+    CHORD_DEGREES = [
+        "tonic",
+        "subtonic",
+        "mediant",
+        "subdominant",
+        "dominant",
+        "submediant",
+        "subtonic",
+    ]
 
     def __init__(self, scale):
         self.scale = scale
@@ -183,9 +193,12 @@ class Chord:
     #     return [self.get_chord(degree) for degree in progression]
 
 
-class ChordProgression:
-    def __init__(self, progression):
-        self.progression = self.generate_chord_progression()
+class ChordProgression(Chord):
+    def __init__(self, n_chords, scale: Scale):
+        super().__init__(scale)  # Initialize the Chord class
+        self.n_chords = n_chords
+        self.progression = self.generate_chord_progression(n_chords)
 
-    def generate_chord_progression(self):
+    def generate_chord_progression(self, n_chords):
+        # start with tonic, then subdominant, then dominant and resolve with other tonic
         pass
