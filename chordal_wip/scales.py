@@ -96,7 +96,7 @@ class Chord:
         "maj",
         "maj",
         "min",
-        "dim",
+        "dim"
     ]
     IONIAN_7_CHORDS = ["maj7", "min7", "min7", "maj7", "7", "min7", "min7♭5"]
 
