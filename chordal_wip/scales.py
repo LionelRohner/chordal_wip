@@ -89,45 +89,44 @@ class Chord:
     }
 
     # Define chord qualities for each scale degree in each mode
-    IONIAN_BASE_CHORDS = [
-        "maj",
-        "min",
-        "min",
-        "maj",
-        "maj",
-        "min",
-        "dim"
-    ]
+    IONIAN_BASE_CHORDS = ["maj", "min", "min", "maj", "maj", "min", "dim"]
     IONIAN_7_CHORDS = ["maj7", "min7", "min7", "maj7", "7", "min7", "min7♭5"]
 
     MODE_CHORDS = {
         "ionian": {
             "triads": IONIAN_BASE_CHORDS,
             "7ths": IONIAN_7_CHORDS,
+            "roman": ["I", "ii", "iii", "IV", "V", "vi", "vii°"],
         },
         "dorian": {
             "triads": rotate_list(IONIAN_BASE_CHORDS, 1),
             "7ths": rotate_list(IONIAN_7_CHORDS, 1),
+            "roman": ["i", "ii", "♭III", "IV", "v", "vi°", "♭VII"],
         },
         "phrygian": {
             "triads": rotate_list(IONIAN_BASE_CHORDS, 2),
             "7ths": rotate_list(IONIAN_7_CHORDS, 2),
+            "roman": ["i", "♭II", "♭III", "iv", "v°", " ♭VI", "♭vii"],
         },
         "lydian": {
             "triads": rotate_list(IONIAN_BASE_CHORDS, 3),
             "7ths": rotate_list(IONIAN_7_CHORDS, 3),
+            "roman": ["I", "II", "iii", "♯iv°", "V", "vi", "vii"],
         },
         "mixolydian": {
             "triads": rotate_list(IONIAN_BASE_CHORDS, 4),
             "7ths": rotate_list(IONIAN_7_CHORDS, 4),
+            "roman": ["I", "ii", "iii°", "IV", "v", "vi", "♭VII"],
         },
         "aeolian": {
             "triads": rotate_list(IONIAN_BASE_CHORDS, 5),
             "7ths": rotate_list(IONIAN_7_CHORDS, 5),
+            "roman": ["i", "ii°", "♭III", "iv", "v", "♭VI", "♭VII"],
         },
         "locrian": {
             "triads": rotate_list(IONIAN_BASE_CHORDS, 6),
             "7ths": rotate_list(IONIAN_7_CHORDS, 6),
+            "roman": ["i°", "♭II", "♭iii", "iv", "♭V♭VI", "♭vii"],
         },
     }
 
@@ -142,6 +141,7 @@ class Chord:
         self.chord_7th_progression = self.generate_chord_progression(
             chord_quality="7ths"
         )
+        self.chord_roman_numerals = Chord.MODE_CHORDS[scale.scale_type]["roman"]
         # self.chord_qualities = self.MODE_CHORD_QUALITIES[self.scale_type]
 
     def generate_chord_progression(self, chord_quality):
