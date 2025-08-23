@@ -130,15 +130,16 @@ class Chord:
         },
     }
 
-    CHORD_DEGREES = [
-        "tonic",
-        "subtonic",
-        "mediant",
-        "subdominant",
-        "dominant",
-        "submediant",
-        "subtonic",
-    ]
+    # needs rotation?
+    CHORD_DEGREES = {
+        "tonic": {"type": "tonic", "tension": 0},
+        "subtonic": {"type": "subdominant", "tension": 40},
+        "mediant": {"type": "tonic", "tension": 20},
+        "subdominant": {"type": "subdominant", "tension": 40},
+        "dominant": {"type": "dominant", "tension": 80},
+        "submediant": {"type": "tonic", "tension": 20},
+        "leading": {"type": "dominant", "tension": 80},
+    }
 
     def __init__(self, scale):
         self.scale = scale
@@ -148,6 +149,7 @@ class Chord:
         self.chords_triad = self.generate_chords(chord_quality="triads")
         self.chords_7th = self.generate_chords(chord_quality="7ths")
         self.chord_roman_numerals = Chord.MODE_CHORDS[scale.scale_type]["roman"]
+        self.chord_degrees = Chord.CHORD_DEGREES
         # self.chord_qualities = self.MODE_CHORD_QUALITIES[self.scale_type]
 
     def generate_chords(self, chord_quality):
@@ -177,7 +179,7 @@ class Chord:
     #     # Calculate the indices of the chord notes in ALL_NOTES
     #     chord_note_indices = [(root_index_in_all_notes + interval) % 12 for interval in self.CHORD_FORMULAS[chord_type]]
     #
-    #     # Get the chord notes from ALL_NOTES
+    #     # Get the chord notes from ALL_NOTESq
     #     chord_notes = self.scale.ALL_NOTES[chord_note_indices]
     #
     #     return chord_notes
@@ -194,11 +196,19 @@ class Chord:
 
 
 class ChordProgression(Chord):
-    def __init__(self, n_chords, scale: Scale):
-        super().__init__(scale)  # Initialize the Chord class
+    def __init__(self, n_chords, chord: Chord):
+        super().__init__(chord)  # Initialize the Chord class
         self.n_chords = n_chords
         self.progression = self.generate_chord_progression(n_chords)
 
     def generate_chord_progression(self, n_chords):
         # start with tonic, then subdominant, then dominant and resolve with other tonic
+        
+        for i in n_chords:
+            if (i == 1){
+
+            }
+            progression.append()
+
+        print(n_chords)
         pass
