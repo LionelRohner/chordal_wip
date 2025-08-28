@@ -1,8 +1,5 @@
 import numpy as np
-
-# import pytest
 from chordal_wip.scales import Scale
-
 
 def test_C_ionian_scale_generation():
     root_note = "C"

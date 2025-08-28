@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.char import index
+import random
 
 
 def rotate_list(arr, n, dir="left"):
@@ -130,16 +130,44 @@ class Chord:
         },
     }
 
-    # needs rotation?
-    CHORD_DEGREES = {
-        "tonic": {"type": "tonic", "tension": 0},
-        "subtonic": {"type": "subdominant", "tension": 40},
-        "mediant": {"type": "tonic", "tension": 20},
-        "subdominant": {"type": "subdominant", "tension": 40},
-        "dominant": {"type": "dominant", "tension": 80},
-        "submediant": {"type": "tonic", "tension": 20},
-        "leading": {"type": "dominant", "tension": 80},
-    }
+    # Example mapping to a range of [-100, 100]
+    # Change to flat dict
+    # Create markovian matrix to jump from state to state
+    # CHORD_DEGREES = {
+    #     "tonic": [
+    #         {"name": "tonic", "position": 1, "tension": -100},
+    #         {"name": "mediant", "position": 3, "tension": -80},
+    #         {"name": "submediant", "position": 6, "tension": -70},
+    #     ],
+    #     "subdominant": [
+    #         {"name": "subertonic", "position": 2, "tension": 30},
+    #         {"name": "subdominant", "position": 4, "tension": 20},
+    #     ],
+    #     "dominant": [
+    #         {"name": "dominant", "position": 5, "tension": 80},
+    #         {"name": "leading", "position": 7, "tension": 80},
+    #     ],
+    # }
+
+    # CHORD_DEGREES = {
+    #     "tonic": {"type": "tonic", "position": 1, "tension": -100},
+    #     "supertonic": {"type": "subdominant", "position": 2, "tension": 30},
+    #     "mediant": {"type": "tonic", "position": 3, "tension": -80},
+    #     "subdominant": {"type": "subdominant", "position": 4, "tension": 20},
+    #     "dominant": {"type": "dominant", "position": 5, "tension": 80},
+    #     "submediant": {"type": "tonic", "position": 6, "tension": -70},
+    #     "leading": {"type": "dominant", "position": 7, "tension": 80},
+    # }
+
+    CHORD_DEGREES = [
+        {"name": "tonic", "type": "tonic", "position": 1, "tension": -100},
+        {"name": "supertonic", "type": "subdominant", "position": 2, "tension": 30},
+        {"name": "mediant", "type": "tonic", "position": 3, "tension": -80},
+        {"name": "subdominant", "type": "subdominant", "position": 4, "tension": 20},
+        {"name": "dominant", "type": "dominant", "position": 5, "tension": 80},
+        {"name": "submediant", "type": "tonic", "position": 6, "tension": -70},
+        {"name": "leading", "type": "dominant", "position": 7, "tension": 80},
+    ]
 
     def __init__(self, scale):
         self.scale = scale
@@ -200,15 +228,54 @@ class ChordProgression(Chord):
         super().__init__(chord)  # Initialize the Chord class
         self.n_chords = n_chords
         self.progression = self.generate_chord_progression(n_chords)
+        self.enrich_progression()
+
+    @staticmethod
+    def _sum_tension(lst_of_dicts):
+        sum_tension = sum(d["tension"] for d in lst_of_dicts)
+        return sum_tension
+
+    def enrich_progression(self):
+        for chord_info in self.progression:
+            index_position = chord_info["position"] - 1
+
+            # Get corresponding roman numerals, triad and 7th chord names
+            roman = self.chord_roman_numerals[index_position]
+            triad = self.chords_triad[index_position]
+            seventh = self.chords_triad[index_position]
+
+            enrichment = {"roman": roman, "triad": triad, "seventh": seventh}
+
+            chord_info.update(enrichment)
+            print(chord_info)
 
     def generate_chord_progression(self, n_chords):
         # start with tonic, then subdominant, then dominant and resolve with other tonic
-        
-        for i in n_chords:
-            if (i == 1){
+        tonic_chords = [
+            chord for chord in self.chord_degrees if chord["type"] == "tonic"
+        ]
+        subdominant_chords = [
+            chord for chord in self.chord_degrees if chord["type"] == "subdominant"
+        ]
+        dominant_chords = [
+            chord for chord in self.chord_degrees if chord["type"] == "dominant"
+        ]
 
-            }
-            progression.append()
+        progression = []
+        for i in range(n_chords):
+            if i == 0:
+                next_chord = random.choice(tonic_chords)
+            elif i == n_chords - 1 and not any(
+                chord["name"] == "tonic" for chord in progression
+            ):
+                next_chord = [
+                    chord for chord in tonic_chords if chord["name"] == "tonic"
+                ][0]
+            elif self._sum_tension(progression) <= 0:
+                next_chord = random.choice(subdominant_chords + dominant_chords)
+            else:
+                next_chord = random.choice(tonic_chords)
 
-        print(n_chords)
-        pass
+            progression.append(next_chord)
+            # print(self._sum_tension(progression))
+        return progression
