@@ -228,11 +228,26 @@ class ChordProgression(Chord):
         super().__init__(chord)  # Initialize the Chord class
         self.n_chords = n_chords
         self.progression = self.generate_chord_progression(n_chords)
+        self.enrich_progression()
 
     @staticmethod
     def _sum_tension(lst_of_dicts):
         sum_tension = sum(d["tension"] for d in lst_of_dicts)
         return sum_tension
+
+    def enrich_progression(self):
+        for chord_info in self.progression:
+            index_position = chord_info["position"] - 1
+
+            # Get corresponding roman numerals, triad and 7th chord names
+            roman = self.chord_roman_numerals[index_position]
+            triad = self.chords_triad[index_position]
+            seventh = self.chords_triad[index_position]
+
+            enrichment = {"roman": roman, "triad": triad, "seventh": seventh}
+
+            chord_info.update(enrichment)
+            print(chord_info)
 
     def generate_chord_progression(self, n_chords):
         # start with tonic, then subdominant, then dominant and resolve with other tonic
@@ -263,5 +278,4 @@ class ChordProgression(Chord):
 
             progression.append(next_chord)
             # print(self._sum_tension(progression))
-
         return progression

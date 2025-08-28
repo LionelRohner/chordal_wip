@@ -12,9 +12,7 @@ chord_progression = ChordProgression(n_chords=4, chord=chord)
 # print(vars(chord_progression))
 dd = chord_progression.progression
 # print([chord for chord in dd if chord["name"] == "tonic"])
-print(dd)
-print([chord["name"] for chord in dd if chord])
-print(any(chord["name"] == "tonic" for chord in dd))
+# print(vars(chord_progression))
 # [d["name"].values() for d in dd.values()]
 # lst = [{"a": "str1", "b": 1}, {"a": "str2", "b": 2}, {"a": "str3", "b": 3}]
 
