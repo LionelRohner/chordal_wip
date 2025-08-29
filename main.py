@@ -1,11 +1,10 @@
 from chordal_wip.scales import ChordProgression, Scale, Chord
-import pandas as pd
 
 scale_ref = Scale("C", "dorian")
 print("C ionian:", scale_ref.notes)
 chord = Chord(scale_ref)
-
-chord_progression = ChordProgression(n_chords=4, chord=chord)
+print(list(chord.data["triads"]))
+# chord_progression = ChordProgression(n_chords=4, chord=chord)
 
 
 # print([chord for chord in dd if chord["name"] == "tonic"])

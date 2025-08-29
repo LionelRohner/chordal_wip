@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import random
 
 
 def rotate_list(arr, n, dir="left"):
@@ -191,7 +190,7 @@ class Chord:
         # filter df for scale_type
         mode_chords = self.MODE_CHORDS[
             self.MODE_CHORDS["scale_type"] == self.scale_type
-        ]
+        ].copy()
 
         # mutate chord cols
         mode_chords["triads"] = self.notes + mode_chords["triads"]
@@ -246,11 +245,6 @@ class ChordProgression(Chord):
         self.n_chords = n_chords
         self.progression = self.generate_chord_progression(n_chords)
 
-    @staticmethod
-    def _sum_tension(lst_of_dicts):
-        sum_tension = sum(d["tension"] for d in lst_of_dicts)
-        return sum_tension
-
     def generate_chord_progression(self, n_chords):
         # start with tonic, then subdominant, then dominant and resolve with other tonic
         tonic_chords = self.data[self.data["type"] == "tonic"]
@@ -264,17 +258,15 @@ class ChordProgression(Chord):
         for i in range(n_chords):
             if i == 0:
                 next_chord = tonic_chords.sample(n=1)
-            # elif i == n_chords - 1 and not any(
-            # chord["name"] == "tonic" for chord in progression
-            # ):
-            # next_chord = [
-            # chord for chord in tonic_chords if chord["name"] == "tonic"
-            # ][0]
-            elif i != 0:  # self._sum_tension(progression) <= 0:
+            elif i == n_chords - 1 and not progression["name"].eq("tonic").any():
+                next_chord = tonic_chords[tonic_chords["name"] == "tonic"]
+            elif progression["tension"].sum() <= 0:
                 next_chord = all_dominant_chords.sample(n=1)
             else:
                 next_chord = tonic_chords.sample(n=1)
-            print(next_chord)
-            # progression.append(next_chord)
-            # print(self._sum_tension(progression))
+
+            progression = pd.concat([progression, next_chord], ignore_index=True)
+
+        print(progression["tension"].sum())
+
         return progression
