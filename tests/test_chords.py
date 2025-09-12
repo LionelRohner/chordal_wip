@@ -11,16 +11,19 @@ def test_C_ionian_chord_generation():
     chord = Chord(scale)
 
     # Expected triads
-    expected_chords = np.array(["Cmaj", "Dmin", "Emin", "Fmaj", "Gmaj", "Amin", "Bdim"])
-    assert np.array_equal(chord.chords_triad, expected_chords), (
-        f"Expected {expected_chords}, got {chord.chords_triad}"
+    expected_chords = ["Cmaj", "Dmin", "Emin", "Fmaj", "Gmaj", "Amin", "Bdim"]
+    actual_chords = list(chord.data["triads"])
+    assert actual_chords == expected_chords, (
+        f"Expected {expected_chords}, got {actual_chords}"
     )
 
     # Expected 7th chords
-    expected_chords = np.array(["Cmaj7", "Dmin7", "Emin7", "Fmaj7", "G7", "Amin7", "Bmin7♭5"])
-    assert np.array_equal(chord.chords_7th, expected_chords), (
-        f"Expected {expected_chords}, got {chord.chords_7th}"
+    expected_chords = ["Cmaj7", "Dmin7", "Emin7", "Fmaj7", "G7", "Amin7", "Bmin7♭5"]
+    actual_chords = list(chord.data["7ths"])
+    assert actual_chords == expected_chords, (
+        f"Expected {expected_chords}, got {actual_chords}"
     )
+
 
 def test_D_dorian_chord_generation():
     root_note = "D"
@@ -29,15 +32,17 @@ def test_D_dorian_chord_generation():
     chord = Chord(scale)
 
     # Expected triads
-    expected_chords = np.array(["Dmin", "Emin", "Fmaj", "Gmaj", "Amin", "Bdim", "Cmaj"])
-    assert np.array_equal(chord.chords_triad, expected_chords), (
-        f"Expected {expected_chords}, got {chord.chords_triad}"
+    expected_chords = ["Dmin", "Emin", "Fmaj", "Gmaj", "Amin", "Bdim", "Cmaj"]
+    actual_chords = list(chord.data["triads"])
+    assert actual_chords == expected_chords, (
+        f"Expected {expected_chords}, got {actual_chords}"
     )
 
     # Expected 7th chords
-    expected_chords = np.array(["Dmin7", "Emin7", "Fmaj7", "G7", "Amin7", "Bmin7♭5", "Cmaj7"])
-    assert np.array_equal(chord.chords_7th, expected_chords), (
-        f"Expected {expected_chords}, got {chord.chords_7th}"
+    expected_chords = ["Dmin7", "Emin7", "Fmaj7", "G7", "Amin7", "Bmin7♭5", "Cmaj7"]
+    actual_chords = list(chord.data["7ths"])
+    assert actual_chords == expected_chords, (
+        f"Expected {expected_chords}, got {actual_chords}"
     )
 
 
@@ -48,13 +53,15 @@ def test_F_myxolydian_chord_generation():
     chord = Chord(scale)
 
     # Expected triads
-    expected_chords = np.array(["F#maj", "G#min", "A#dim", "Bmaj", "C#min", "D#min", "Emaj"])
-    assert np.array_equal(chord.chords_triad, expected_chords), (
-        f"Expected {expected_chords}, got {chord.chords_triad}"
+    expected_chords = ["F#maj", "G#min", "A#dim", "Bmaj", "C#min", "D#min", "Emaj"]
+    actual_chords = list(chord.data["triads"])
+    assert actual_chords == expected_chords, (
+        f"Expected {expected_chords}, got {actual_chords}"
     )
 
     # Expected 7th chords
-    expected_chords = np.array(["F#7", "G#min7", "A#min7♭5", "Bmaj7", "C#min7", "D#min7", "Emaj7"])
-    assert np.array_equal(chord.chords_7th, expected_chords), (
-        f"Expected {expected_chords}, got {chord.chords_7th}"
+    expected_chords = ["F#7", "G#min7", "A#min7♭5", "Bmaj7", "C#min7", "D#min7", "Emaj7"]
+    actual_chords = list(chord.data["7ths"])
+    assert actual_chords == expected_chords, (
+        f"Expected {expected_chords}, got {actual_chords}"
     )

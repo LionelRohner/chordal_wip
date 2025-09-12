@@ -10,7 +10,7 @@ def test_progression_generation():
     progression = ChordProgression(n_chords=4, chord=chord)
 
     # Expected triads
-    expected_tonic = any(chord["name"] == "tonic" for chord in progression.progression)
+    expected_tonic = progression.progression["name"].eq("tonic").any()
     assert expected_tonic, (
         f"Expected the tonic chord in the progression, but it is absent"
     )
