@@ -4,8 +4,8 @@ scale_ref = Scale("C", "dorian")
 print("C ionian:", scale_ref.notes)
 chord = Chord(scale_ref)
 print(list(chord.data["triads"]))
-# chord_progression = ChordProgression(n_chords=4, chord=chord)
-
+chord_progression = ChordProgression(n_chords=4, chord=chord)
+print(vars(chord_progression))
 
 # print([chord for chord in dd if chord["name"] == "tonic"])
 # print(vars(chord_progression))

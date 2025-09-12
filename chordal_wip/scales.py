@@ -267,6 +267,12 @@ class ChordProgression(Chord):
 
             progression = pd.concat([progression, next_chord], ignore_index=True)
 
-        print(progression["tension"].sum())
-
         return progression
+
+
+class MarkovChordProgression(ChordProgression):
+    def __init__(self, n_chords, chord: Chord):
+        super().__init__(n_chords, chord)  # init from  parent
+
+    def generate_chord_progression(self, n_chords):
+        pass
