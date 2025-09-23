@@ -270,9 +270,56 @@ class ChordProgression(Chord):
         return progression
 
 
-class MarkovChordProgression(ChordProgression):
+class MarkovChordProgression(Chord):
     def __init__(self, n_chords, chord: Chord):
-        super().__init__(n_chords, chord)  # init from  parent
+        super().__init__(chord)  # init from  parent
+        self.k = n_chords
+        self.chord_names = self.data["roman"].values
+        self.transition_matrix = self._build_transition_matrix()
+        self.progression = self.generate_progression(n_chords)
 
-    def generate_chord_progression(self, n_chords):
-        pass
+    def _build_transition_matrix(self):
+        """
+        Explain logic later
+        """
+        roman_numerals = self.data["roman"].values
+
+        # hardcoded transition matrix
+        transition_matrix = np.array(
+            [
+                # From (Row) / To (Col)
+                # t  # st  # m  # sd # d # sm #ln
+                [0.2, 0.3, 0.1, 0.2, 0.1, 0.1, 0.0],  # tonic
+                [0.1, 0.0, 0.1, 0.2, 0.5, 0.1, 0.0],  # supertonic
+                [0.2, 0.2, 0.0, 0.2, 0.3, 0.1, 0.0],  # mediant
+                [0.3, 0.2, 0.1, 0.1, 0.3, 0.0, 0.0],  # suddominant
+                [0.7, 0.0, 0.0, 0.1, 0.0, 0.2, 0.0],  # dominant
+                [0.4, 0.2, 0.1, 0.2, 0.1, 0.0, 0.0],  # submediant
+                [0.6, 0.0, 0.2, 0.1, 0.1, 0.0, 0.0],  # leading note
+            ]
+        )
+
+        # Add fuzzyness depending on genre or whatevs
+        return transition_matrix
+
+    def generate_progression(self, n_chords):
+        """
+        Generaate a chord progression by walking through the transition matrix
+        """
+        progression = []  # Empty list to store the progression
+        current_chord_idx = 0  # Start with "I" (index 0)
+
+        for _ in range(self.k):  # Repeat `k` times
+            # Append the current chord's name to the progression
+            progression.append(self.chord_names[current_chord_idx])
+            # Randomly choose the next chord based on the current chord's transition probabilities
+            next_chord_idx = np.random.choice(
+                len(self.chord_names),  # Number of possible chords
+                p=self.transition_matrix[
+                    current_chord_idx
+                ],  # Probabilities for each chord
+            )
+            # Update the current chord for the next iteration
+            current_chord_idx = next_chord_idx
+
+        return progression
