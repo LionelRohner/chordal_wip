@@ -1,5 +1,7 @@
+from typing import ValuesView
 import pandas as pd
 import numpy as np
+import random
 
 
 def rotate_list(arr, n, dir="left"):
@@ -275,8 +277,19 @@ class MarkovChordProgression(Chord):
         super().__init__(chord)  # init from  parent
         self.k = n_chords
         self.chord_names = self.data["roman"].values
+        self.intial_state = self._init_state_vec()
         self.transition_matrix = self._build_transition_matrix()
         self.progression = self.generate_progression(n_chords)
+
+    def _init_state_vec(self):
+        """
+        Set initial state probaility vector
+        """
+        tension = self.data["tension"].values * -1
+        tension_min_max = (tension - min(tension)) / (max(tension) - min(tension))
+        tension_norm = tension_min_max / sum(tension_min_max)
+        print(tension_norm)
+        return tension_norm
 
     def _build_transition_matrix(self):
         """
@@ -306,20 +319,7 @@ class MarkovChordProgression(Chord):
         """
         Generaate a chord progression by walking through the transition matrix
         """
-        progression = []  # Empty list to store the progression
-        current_chord_idx = 0  # Start with "I" (index 0)
-
-        for _ in range(self.k):  # Repeat `k` times
-            # Append the current chord's name to the progression
-            progression.append(self.chord_names[current_chord_idx])
-            # Randomly choose the next chord based on the current chord's transition probabilities
-            next_chord_idx = np.random.choice(
-                len(self.chord_names),  # Number of possible chords
-                p=self.transition_matrix[
-                    current_chord_idx
-                ],  # Probabilities for each chord
-            )
-            # Update the current chord for the next iteration
-            current_chord_idx = next_chord_idx
-
-        return progression
+        progression = []  # Empty list to store the generate_chord_progression
+        roman_numerals = self.data["roman"].values
+        initial_chord = np.random.choice(roman_numerals, size=100, p=self.intial_state)
+        print(initial_chord)
