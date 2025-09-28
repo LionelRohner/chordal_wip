@@ -5,4 +5,6 @@ scale_ref = Scale("C", "dorian")
 chord = Chord(scale_ref)
 # print(list(chord.data["triads"]))
 chord_progression = MarkovChordProgression(n_chords=4, chord=chord)
-print(vars(chord_progression))
+print(chord_progression)
+
+print([1, 2, 3][-1])
