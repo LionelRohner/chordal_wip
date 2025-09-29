@@ -95,7 +95,6 @@ class Chord:
         [
             pd.DataFrame(
                 {
-                    "position": list(range(1, 8)),
                     "scale_type": ["ionian"] * 7,
                     "triads": IONIAN_BASE_CHORDS,
                     "7ths": IONIAN_7_CHORDS,
@@ -104,7 +103,6 @@ class Chord:
             ),
             pd.DataFrame(
                 {
-                    "position": list(range(1, 8)),
                     "scale_type": ["dorian"] * 7,
                     "triads": rotate_list(IONIAN_BASE_CHORDS, 1),
                     "7ths": rotate_list(IONIAN_7_CHORDS, 1),
@@ -113,7 +111,6 @@ class Chord:
             ),
             pd.DataFrame(
                 {
-                    "position": list(range(1, 8)),
                     "scale_type": ["phrygian"] * 7,
                     "triads": rotate_list(IONIAN_BASE_CHORDS, 2),
                     "7ths": rotate_list(IONIAN_7_CHORDS, 2),
@@ -122,7 +119,6 @@ class Chord:
             ),
             pd.DataFrame(
                 {
-                    "position": list(range(1, 8)),
                     "scale_type": ["lydian"] * 7,
                     "triads": rotate_list(IONIAN_BASE_CHORDS, 3),
                     "7ths": rotate_list(IONIAN_7_CHORDS, 3),
@@ -131,7 +127,6 @@ class Chord:
             ),
             pd.DataFrame(
                 {
-                    "position": list(range(1, 8)),
                     "scale_type": ["mixolydian"] * 7,
                     "triads": rotate_list(IONIAN_BASE_CHORDS, 4),
                     "7ths": rotate_list(IONIAN_7_CHORDS, 4),
@@ -140,7 +135,6 @@ class Chord:
             ),
             pd.DataFrame(
                 {
-                    "position": list(range(1, 8)),
                     "scale_type": ["aolian"] * 7,
                     "triads": rotate_list(IONIAN_BASE_CHORDS, 5),
                     "7ths": rotate_list(IONIAN_7_CHORDS, 5),
@@ -153,7 +147,6 @@ class Chord:
                     "triads": rotate_list(IONIAN_BASE_CHORDS, 6),
                     "7ths": rotate_list(IONIAN_7_CHORDS, 6),
                     "roman": ["i°", "♭II", "♭iii", "iv", "♭V", "♭VI", "♭vii"],
-                    "position": list(range(1, 8)),
                 }
             ),
         ]
@@ -161,18 +154,13 @@ class Chord:
 
     CHORD_DEGREES = pd.DataFrame(
         [
-            {"position": 1, "name": "tonic", "type": "tonic", "tension": -100},
-            {"position": 2, "name": "supertonic", "type": "subdominant", "tension": 30},
-            {"position": 3, "name": "mediant", "type": "tonic", "tension": -80},
-            {
-                "position": 4,
-                "name": "subdominant",
-                "type": "subdominant",
-                "tension": 20,
-            },
-            {"position": 5, "name": "dominant", "type": "dominant", "tension": 80},
-            {"position": 6, "name": "submediant", "type": "tonic", "tension": -70},
-            {"position": 7, "name": "leading", "type": "dominant", "tension": 80},
+            {"name": "tonic", "type": "tonic", "tension": -100},
+            {"name": "supertonic", "type": "subdominant", "tension": 30},
+            {"name": "mediant", "type": "tonic", "tension": -80},
+            {"name": "subdominant", "type": "subdominant", "tension": 20},
+            {"name": "dominant", "type": "dominant", "tension": 80},
+            {"name": "submediant", "type": "tonic", "tension": -70},
+            {"name": "leading", "type": "dominant", "tension": 80},
         ]
     )
 
@@ -193,7 +181,7 @@ class Chord:
         mode_chords["7ths"] = self.notes + mode_chords["7ths"]
 
         # add chord degree information
-        merged_data = pd.merge(mode_chords, self.CHORD_DEGREES, on="position", how="left")
+        merged_data = pd.merge(mode_chords, self.CHORD_DEGREES, left_index=True, right_index=True)
         return merged_data
 
     # def get_chord(self, degree, chord_type=None):
@@ -270,6 +258,7 @@ class MarkovChordProgression(Chord):
         self.intial_state = self._init_state_vec()
         self.transition_matrix = self._build_transition_matrix()
         self.progression = self.generate_progression(n_chords)
+        self.tension_overall = self.progression["tension"].sum()
 
     def _init_state_vec(self):
         """
@@ -282,14 +271,15 @@ class MarkovChordProgression(Chord):
 
     def _build_transition_matrix(self):
         """
-        Explain logic later
+        Explain logic if the transition_matrix is not hardcoded anymore
+        If not make it an attribute and not a method
         """
 
         # hardcoded transition matrix: THIS SUCKS
         transition_matrix = np.array(
             [
                 # From (Row) / To (Col)
-                # t  # st  # m  # sd # d # sm #ln
+                # t   # st # m   # sd # d  # sm #ln
                 [0.1, 0.2, 0.05, 0.3, 0.25, 0.1, 0.0],  #  tonic
                 [0.3, 0.0, 0.1, 0.3, 0.2, 0.0, 0.1],  #  subtonic
                 [0.2, 0.1, 0.0, 0.2, 0.3, 0.1, 0.1],  #  mediant
@@ -305,24 +295,34 @@ class MarkovChordProgression(Chord):
 
     def generate_progression(self, n_chords):
         """
-        Generate a chord progression by walking through the transition matrix
+        Generate a chord progression using a Markov chain.
+
+        Args:
+            n_chords (int): Number of chords in the progression.
+
+        Returns:
+            pandas.DataFrame: A DataFrame containing the generated chord progression,
+                             with columns for chord details (e.g., position, scale_type, triads, etc.).
+                             Index is reset to a sequential range.
+
+        Notes:
+            - The first chord is selected using the initial state probability distribution (`self.initial_state`).
+            - Subsequent chords are selected based on the transition probabilities from the current chord.
+            - The progression is generated by sampling from the transition matrix row corresponding to the last chord.
         """
-        chord_position = self.data["position"].values.astype(int)
-        first_chord = np.random.choice(chord_position, size=1, p=self.intial_state)
-        progression = np.array(first_chord, dtype=int)
+        chord_idx = list(range(0, 7))
 
-        for _ in range(n_chords - 1):
-            last_chord_idx = progression[-1]
-            print("idx", last_chord_idx)
-            print("A", self.transition_matrix[last_chord_idx])
-            print("chord_position", chord_position)
-            print("length row vec:", len(self.transition_matrix[last_chord_idx]))
-            next_chord = np.random.choice(chord_position, size=1, p=self.transition_matrix[last_chord_idx])
-            progression = np.append(progression, next_chord)
+        # Pre-allocate vec
+        progression = np.empty(n_chords, dtype=int)
 
-        out = self.data.head(0)
-        for c in progression:
-            out = pd.concat([out, self.data[self.data["position"] == c]])
+        # Add first chord (first state)
+        progression[0] = np.random.choice(chord_idx, size=1, p=self.intial_state)
+
+        for i in range(1, n_chords):
+            last_chord_idx = progression[i - 1]
+            progression[i] = np.random.choice(chord_idx, size=1, p=self.transition_matrix[last_chord_idx])
+
+        out = self.data.iloc[progression]
         out = out.reset_index(drop=True)
-        print(out)
+
         return out
