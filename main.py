@@ -1,21 +1,8 @@
-from chordal_wip.scales import ChordProgression, Scale, Chord
+from chordal_wip.scales import MarkovChordProgression, Scale, Chord
 
 scale_ref = Scale("C", "dorian")
-print("C ionian:", scale_ref.notes)
+# print("C ionian:", scale_ref.notes)
 chord = Chord(scale_ref)
-print(list(chord.data["triads"]))
-# chord_progression = ChordProgression(n_chords=4, chord=chord)
-
-
-# print([chord for chord in dd if chord["name"] == "tonic"])
-# print(vars(chord_progression))
-# [d["name"].values() for d in dd.values()]
-# lst = [{"a": "str1", "b": 1}, {"a": "str2", "b": 2}, {"a": "str3", "b": 3}]
-
-# print(sum(d["b"] for d in lst))
-# print([sum(v for v in d["b"]) for d in lst])
-
-# print(vars(chord_progression))
-
-# scale = Scale("F#", "mixolydian")
-# print("F mixolydian:", scale.notes)
+# print(list(chord.data["triads"]))
+chord_progression = MarkovChordProgression(n_chords=4, chord=chord)
+print(vars(chord_progression))

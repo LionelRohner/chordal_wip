@@ -1,5 +1,7 @@
+from typing import ValuesView
 import pandas as pd
 import numpy as np
+import random
 
 
 def rotate_list(arr, n, dir="left"):
@@ -31,9 +33,7 @@ def rotate_list(arr, n, dir="left"):
 class Scale:
     """A class to represent musical scales, specifically church modes derived from the major scale."""
 
-    ALL_NOTES = np.array(
-        ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-    )
+    ALL_NOTES = np.array(["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"])
 
     # Distance between intervalls in diatonic sclae, i.e. 2 (whole-step) or 1 (half-step)
     DIATONIC_INTERVALS = np.array([2, 2, 1, 2, 2, 2, 1])
@@ -50,9 +50,7 @@ class Scale:
 
     def __init__(self, root_note, scale_type):
         if root_note not in self.ALL_NOTES:
-            raise ValueError(
-                f"Invalid root note: {root_note}. Must be one of {self.ALL_NOTES}."
-            )
+            raise ValueError(f"Invalid root note: {root_note}. Must be one of {self.ALL_NOTES}.")
         if scale_type not in self.scales_dict:
             raise ValueError(
                 f"Invalid scale type: {scale_type}. Must be one of {list(self.scales_dict.keys())}."
@@ -97,7 +95,6 @@ class Chord:
         [
             pd.DataFrame(
                 {
-                    "position": list(range(1, 8)),
                     "scale_type": ["ionian"] * 7,
                     "triads": IONIAN_BASE_CHORDS,
                     "7ths": IONIAN_7_CHORDS,
@@ -106,7 +103,6 @@ class Chord:
             ),
             pd.DataFrame(
                 {
-                    "position": list(range(1, 8)),
                     "scale_type": ["dorian"] * 7,
                     "triads": rotate_list(IONIAN_BASE_CHORDS, 1),
                     "7ths": rotate_list(IONIAN_7_CHORDS, 1),
@@ -115,7 +111,6 @@ class Chord:
             ),
             pd.DataFrame(
                 {
-                    "position": list(range(1, 8)),
                     "scale_type": ["phrygian"] * 7,
                     "triads": rotate_list(IONIAN_BASE_CHORDS, 2),
                     "7ths": rotate_list(IONIAN_7_CHORDS, 2),
@@ -124,7 +119,6 @@ class Chord:
             ),
             pd.DataFrame(
                 {
-                    "position": list(range(1, 8)),
                     "scale_type": ["lydian"] * 7,
                     "triads": rotate_list(IONIAN_BASE_CHORDS, 3),
                     "7ths": rotate_list(IONIAN_7_CHORDS, 3),
@@ -133,7 +127,6 @@ class Chord:
             ),
             pd.DataFrame(
                 {
-                    "position": list(range(1, 8)),
                     "scale_type": ["mixolydian"] * 7,
                     "triads": rotate_list(IONIAN_BASE_CHORDS, 4),
                     "7ths": rotate_list(IONIAN_7_CHORDS, 4),
@@ -142,7 +135,6 @@ class Chord:
             ),
             pd.DataFrame(
                 {
-                    "position": list(range(1, 8)),
                     "scale_type": ["aolian"] * 7,
                     "triads": rotate_list(IONIAN_BASE_CHORDS, 5),
                     "7ths": rotate_list(IONIAN_7_CHORDS, 5),
@@ -155,7 +147,6 @@ class Chord:
                     "triads": rotate_list(IONIAN_BASE_CHORDS, 6),
                     "7ths": rotate_list(IONIAN_7_CHORDS, 6),
                     "roman": ["i°", "♭II", "♭iii", "iv", "♭V", "♭VI", "♭vii"],
-                    "position": list(range(1, 8)),
                 }
             ),
         ]
@@ -163,18 +154,13 @@ class Chord:
 
     CHORD_DEGREES = pd.DataFrame(
         [
-            {"position": 1, "name": "tonic", "type": "tonic", "tension": -100},
-            {"position": 2, "name": "supertonic", "type": "subdominant", "tension": 30},
-            {"position": 3, "name": "mediant", "type": "tonic", "tension": -80},
-            {
-                "position": 4,
-                "name": "subdominant",
-                "type": "subdominant",
-                "tension": 20,
-            },
-            {"position": 5, "name": "dominant", "type": "dominant", "tension": 80},
-            {"position": 6, "name": "submediant", "type": "tonic", "tension": -70},
-            {"position": 7, "name": "leading", "type": "dominant", "tension": 80},
+            {"name": "tonic", "type": "tonic", "tension": -100},
+            {"name": "supertonic", "type": "subdominant", "tension": 30},
+            {"name": "mediant", "type": "tonic", "tension": -80},
+            {"name": "subdominant", "type": "subdominant", "tension": 20},
+            {"name": "dominant", "type": "dominant", "tension": 80},
+            {"name": "submediant", "type": "tonic", "tension": -70},
+            {"name": "leading", "type": "dominant", "tension": 80},
         ]
     )
 
@@ -188,18 +174,14 @@ class Chord:
 
     def merge_data(self):
         # filter df for scale_type
-        mode_chords = self.MODE_CHORDS[
-            self.MODE_CHORDS["scale_type"] == self.scale_type
-        ].copy()
+        mode_chords = self.MODE_CHORDS[self.MODE_CHORDS["scale_type"] == self.scale_type].copy()
 
         # mutate chord cols
         mode_chords["triads"] = self.notes + mode_chords["triads"]
         mode_chords["7ths"] = self.notes + mode_chords["7ths"]
 
         # add chord degree information
-        merged_data = pd.merge(
-            mode_chords, self.CHORD_DEGREES, on="position", how="left"
-        )
+        merged_data = pd.merge(mode_chords, self.CHORD_DEGREES, left_index=True, right_index=True)
         return merged_data
 
     # def get_chord(self, degree, chord_type=None):
@@ -250,9 +232,7 @@ class ChordProgression(Chord):
         tonic_chords = self.data[self.data["type"] == "tonic"]
         subdominant_chords = self.data[self.data["type"] == "subdominant"]
         dominant_chords = self.data[self.data["type"] == "dominant"]
-        all_dominant_chords = self.data[
-            self.data["type"].isin(["subdominant", "dominant"])
-        ]
+        all_dominant_chords = self.data[self.data["type"].isin(["subdominant", "dominant"])]
 
         progression = pd.DataFrame(columns=self.data.columns)
         for i in range(n_chords):
@@ -267,6 +247,82 @@ class ChordProgression(Chord):
 
             progression = pd.concat([progression, next_chord], ignore_index=True)
 
-        print(progression["tension"].sum())
-
         return progression
+
+
+class MarkovChordProgression(Chord):
+    def __init__(self, n_chords, chord: Chord):
+        super().__init__(chord)  # init from  parent
+        self.n_chords = n_chords
+        self.chord_names = self.data["roman"].values
+        self.intial_state = self._init_state_vec()
+        self.transition_matrix = self._build_transition_matrix()
+        self.progression = self.generate_progression(n_chords)
+        self.tension_overall = self.progression["tension"].sum()
+
+    def _init_state_vec(self):
+        """
+        Set initial state probaility vector
+        """
+        tension = self.data["tension"].values * -1
+        tension_min_max = (tension - min(tension)) / (max(tension) - min(tension))
+        tension_norm = tension_min_max / sum(tension_min_max)
+        return tension_norm
+
+    def _build_transition_matrix(self):
+        """
+        Explain logic if the transition_matrix is not hardcoded anymore
+        If not make it an attribute and not a method
+        """
+
+        # hardcoded transition matrix: THIS SUCKS
+        transition_matrix = np.array(
+            [
+                # From (Row) / To (Col)
+                # t   # st # m   # sd # d  # sm #ln
+                [0.1, 0.2, 0.05, 0.3, 0.25, 0.1, 0.0],  #  tonic
+                [0.3, 0.0, 0.1, 0.3, 0.2, 0.0, 0.1],  #  subtonic
+                [0.2, 0.1, 0.0, 0.2, 0.3, 0.1, 0.1],  #  mediant
+                [0.3, 0.1, 0.1, 0.1, 0.3, 0.0, 0.1],  #  Isubdominant
+                [0.6, 0.0, 0.0, 0.1, 0.0, 0.2, 0.1],  #  dominant
+                [0.4, 0.1, 0.1, 0.2, 0.1, 0.0, 0.1],  #  subdemiant
+                [0.6, 0.0, 0.2, 0.1, 0.1, 0.0, 0.0],  #  leadning note
+            ]
+        )
+
+        # Add fuzzyness depending on genre or whatevs
+        return transition_matrix
+
+    def generate_progression(self, n_chords):
+        """
+        Generate a chord progression using a Markov chain.
+
+        Args:
+            n_chords (int): Number of chords in the progression.
+
+        Returns:
+            pandas.DataFrame: A DataFrame containing the generated chord progression,
+                             with columns for chord details (e.g., position, scale_type, triads, etc.).
+                             Index is reset to a sequential range.
+
+        Notes:
+            - The first chord is selected using the initial state probability distribution (`self.initial_state`).
+            - Subsequent chords are selected based on the transition probabilities from the current chord.
+            - The progression is generated by sampling from the transition matrix row corresponding to the last chord.
+        """
+        chord_idx = list(range(0, 7))
+
+        # Pre-allocate vec
+        progression = np.empty(n_chords, dtype=int)
+
+        # Add first chord (first state)
+        progression[0] = np.random.choice(chord_idx, size=1, p=self.intial_state)
+
+        for i in range(1, n_chords):
+            last_chord_idx = progression[i - 1]
+            progression[i] = np.random.choice(chord_idx, size=1, p=self.transition_matrix[last_chord_idx])
+
+        out = self.data.iloc[progression]
+        out = out.reset_index(drop=True)
+
+        return out
