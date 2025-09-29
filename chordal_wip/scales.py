@@ -278,7 +278,6 @@ class MarkovChordProgression(Chord):
         tension = self.data["tension"].values * -1
         tension_min_max = (tension - min(tension)) / (max(tension) - min(tension))
         tension_norm = tension_min_max / sum(tension_min_max)
-        print(type(tension_norm))
         return tension_norm
 
     def _build_transition_matrix(self):
@@ -291,13 +290,13 @@ class MarkovChordProgression(Chord):
             [
                 # From (Row) / To (Col)
                 # t  # st  # m  # sd # d # sm #ln
-                [0.2, 0.3, 0.1, 0.2, 0.1, 0.1, 0.0],  # tonic
-                [0.1, 0.0, 0.1, 0.2, 0.5, 0.1, 0.0],  # supertonic
-                [0.2, 0.2, 0.0, 0.2, 0.3, 0.1, 0.0],  # mediant
-                [0.3, 0.2, 0.1, 0.1, 0.3, 0.0, 0.0],  # suddominant
-                [0.7, 0.0, 0.0, 0.1, 0.0, 0.2, 0.0],  # dominant
-                [0.4, 0.2, 0.1, 0.2, 0.1, 0.0, 0.0],  # submediant
-                [0.6, 0.0, 0.2, 0.1, 0.1, 0.0, 0.0],  # leading note
+                [0.1, 0.2, 0.05, 0.3, 0.25, 0.1, 0.0],  #  tonic
+                [0.3, 0.0, 0.1, 0.3, 0.2, 0.0, 0.1],  #  subtonic
+                [0.2, 0.1, 0.0, 0.2, 0.3, 0.1, 0.1],  #  mediant
+                [0.3, 0.1, 0.1, 0.1, 0.3, 0.0, 0.1],  #  Isubdominant
+                [0.6, 0.0, 0.0, 0.1, 0.0, 0.2, 0.1],  #  dominant
+                [0.4, 0.1, 0.1, 0.2, 0.1, 0.0, 0.1],  #  subdemiant
+                [0.6, 0.0, 0.2, 0.1, 0.1, 0.0, 0.0],  #  leadning note
             ]
         )
 
@@ -314,9 +313,16 @@ class MarkovChordProgression(Chord):
 
         for _ in range(n_chords - 1):
             last_chord_idx = progression[-1]
-            print("last_chord_idx", last_chord_idx, type(last_chord_idx))
+            print("idx", last_chord_idx)
+            print("A", self.transition_matrix[last_chord_idx])
+            print("chord_position", chord_position)
+            print("length row vec:", len(self.transition_matrix[last_chord_idx]))
             next_chord = np.random.choice(chord_position, size=1, p=self.transition_matrix[last_chord_idx])
             progression = np.append(progression, next_chord)
 
-        # FIXME: Doesnt handle repeated chords
-        print(self.data[self.data["position"].isin(progression)])
+        out = self.data.head(0)
+        for c in progression:
+            out = pd.concat([out, self.data[self.data["position"] == c]])
+        out = out.reset_index(drop=True)
+        print(out)
+        return out
