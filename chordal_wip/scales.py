@@ -286,7 +286,7 @@ class MarkovChordProgression(Chord):
         Explain logic later
         """
 
-        # hardcoded transition matrix
+        # hardcoded transition matrix: THIS SUCKS
         transition_matrix = np.array(
             [
                 # From (Row) / To (Col)
@@ -318,4 +318,5 @@ class MarkovChordProgression(Chord):
             next_chord = np.random.choice(chord_position, size=1, p=self.transition_matrix[last_chord_idx])
             progression = np.append(progression, next_chord)
 
+        # FIXME: Doesnt handle repeated chords
         print(self.data[self.data["position"].isin(progression)])
