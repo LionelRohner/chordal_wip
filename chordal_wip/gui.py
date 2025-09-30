@@ -74,6 +74,26 @@ class MyBoxLayout(BoxLayout):
         self.generate_button.bind(on_press=self.call_progression)
         self.add_widget(self.generate_button)
 
+        # Add footnote at the bottom
+        footnote_layout = BoxLayout(size_hint=(1, 0.05))  # Full width, 5% height
+
+        # Empty label to push footnote to the right
+        footnote_layout.add_widget(Label(size_hint=(0.8, 1)))
+
+        # Footnote label
+        # TODO: Fix formatting
+        footnote = Label(
+            text="Powered by Robo [【•】◡【•】]",
+            size_hint=(0.2, 1),
+            halign="right",
+            valign="middle",
+            font_size=12,
+            color=(0.5, 0.5, 0.5, 1),
+        )
+        footnote_layout.add_widget(footnote)
+
+        # Add footnote layout to the main layout
+        self.add_widget(footnote_layout)
         # TODO: Add all add_widgets here
 
         # Init progression
