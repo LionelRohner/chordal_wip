@@ -2,7 +2,6 @@ import kivy
 from kivy.app import App
 from kivy.uix.label import Label
 from kivy.uix.gridlayout import GridLayout
-from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.spinner import Spinner
@@ -34,27 +33,70 @@ class MyBoxLayout(BoxLayout):
 
         # Add GridLayout for chords
         # TODO: Add logic to expand grid depending on n_chords
-        self.grid = GridLayout(cols=2)
+        self.grid = GridLayout(
+            cols=2, # n of columns
+            spacing=[10, 80],          # Add this line to increase vertical spacing between rows
+            padding=10         # Optional: Add padding around the grid (optional)
+        )
 
-        # TODO: Name should be big, below add roman numerals and chord degree name
-        # place holder text
-        self.chord_labels = [
-            Label(text="Chord_1"),
-            Label(text="Chord_2"),
-            Label(text="Chord_3"),
-            Label(text="Chord_4"),
-        ]
+        # Replace your chord_labels list creation with this:
+        self.chord_displays = []
+        for i in range(4):  # For 4 chords
+            # Create a vertical layout for each chord
+            chord_layout = BoxLayout(
+                orientation='vertical',
+                size_hint=(0.5, None),
+                height=80,  # Fixed height for each chord display
+                spacing=2  # Space between lines
+            )
 
-        # Add label to grid
-        for label in self.chord_labels:
-            self.grid.add_widget(label)
+            # Chord name label (big and bold)
+            chord_name = Label(
+                text=f"Chord_{i+1}",
+                font_size=24,
+                bold=True,
+                halign='center',
+                valign='middle',
+                size_hint=(1, 0.4)
+            )
 
-        # Add grid to layout
+            # Roman numeral label (smaller)
+            roman_numeral = Label(
+                text="",
+                font_size=18,
+                halign='center',
+                valign='middle',
+                size_hint=(1, 0.3)
+            )
+
+            # Chord degree label (smallest, in parentheses)
+            chord_degree = Label(
+                text="",
+                font_size=14,
+                halign='center',
+                valign='middle',
+                size_hint=(1, 0.3)
+            )
+
+            # Add labels to the chord layout
+            chord_layout.add_widget(chord_name)
+            chord_layout.add_widget(roman_numeral)
+            chord_layout.add_widget(chord_degree)
+
+            # Add the chord layout to the grid and to our list
+            self.grid.add_widget(chord_layout)
+            self.chord_displays.append({
+                'name': chord_name,
+                'roman': roman_numeral,
+                'degree': chord_degree
+            })
+
+        # Add the grid to the main layout
         self.add_widget(self.grid)
 
         self.spinner_root = Spinner(
             text="C",
-            values=cw.Scale.ALL_NOTES, #
+            values=cw.Scale.ALL_NOTES,  #
             size_hint=(0.2, 0.1),
         )
         self.add_widget(self.spinner_root)
@@ -116,11 +158,38 @@ class MyBoxLayout(BoxLayout):
         chord = cw.Chord(scale)
 
         # Create progression
+        # TODO: Extract total tension, could be used as a metric
         progression = cw.MarkovChordProgression(n_chords=4, chord=chord)
         self.progression = progression.progression
 
-        # Update labels
-        self.on_spinner_select(self.spinner_chord_type, self.spinner_chord_type.text)
+        # Update ALL chord information (not just triads/7ths)
+        self.update_chord_display()
+
+    def update_chord_display(self):
+        """
+        Update the chord display with all information (name, roman numeral, degree).
+        """
+        if self.progression is None:
+            return
+
+        # Get the current chord type (triads or 7ths)
+        chord_type = self.spinner_chord_type.text
+
+        # Extract all data from the DataFrame
+        chords = self.progression[chord_type].tolist()
+        roman_numerals = self.progression["roman"].tolist()
+        degrees = self.progression["name"].tolist()
+
+        for i, display in enumerate(self.chord_displays):
+            if i < len(chords):
+                display["name"].text = chords[i]
+                display["roman"].text = roman_numerals[i]
+                display["degree"].text = f"({degrees[i]})"
+            else:
+                # Reset placeholders
+                display["name"].text = f"Chord_{i + 1}"
+                display["roman"].text = ""
+                display["degree"].text = ""
 
     def on_spinner_select(self, spinner, text):
         """Update chord labels when the chord type spinner selection changes.
@@ -135,10 +204,10 @@ class MyBoxLayout(BoxLayout):
         # Check if p exists, else do nothing
         if self.progression is not None:
             chords = self.progression[text].tolist()  # Get triads or 7ths
-            for i, label in enumerate(self.chord_labels):
+            for i, display in enumerate(self.chord_displays):
                 # handles not replacing place holders when n_chords < 4
                 if i < len(chords):
-                    label.text = chords[i]
+                    display["name"].text = chords[i]
 
 
 class MyApp(App):
