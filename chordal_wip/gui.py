@@ -18,17 +18,13 @@ class MyBoxLayout(BoxLayout):
         # Stack drop down and chord grid vertically
         self.orientation = "vertical"
 
-        # Add dropdown for triads/7ths selection
+        # Drop down for chord type
         self.spinner_chord_type = Spinner(
-            text="Chord Type",  # default text
+            text="triads",  # default text
             values=("triads", "7ths"),  # Options
             size_hint=(0.2, 0.1),  # relative height and width,
             pos_hint={"center_x": 0.5},  # position param
         )
-
-        # TODO: Clean up here, make tidy blocks for each widget, mv add_widget to back
-        # Set the default value to "triads" (first valid option)
-        self.spinner_chord_type.text = "7ths"
 
         # Call method when drop down is used
         self.spinner_chord_type.bind(text=self.on_spinner_select)
@@ -58,13 +54,15 @@ class MyBoxLayout(BoxLayout):
 
         self.spinner_root = Spinner(
             text="C",
-            values=cw.Scale("C", "ionian").ALL_NOTES,  #
+            values=cw.Scale.ALL_NOTES, #
             size_hint=(0.2, 0.1),
         )
         self.add_widget(self.spinner_root)
+
+        # Spinner
         self.spinner_mode = Spinner(
             text="ionian",
-            values=list(cw.Scale("C", "ionian").scales_dict.keys()),  #
+            values=list(cw.Scale.SCALES_DICT.keys()),  #
             size_hint=(0.2, 0.1),
         )
         self.add_widget(self.spinner_mode)
