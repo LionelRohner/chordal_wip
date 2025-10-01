@@ -31,17 +31,18 @@ def rotate_list(arr, n, dir="left"):
 
 
 class Scale:
-    """A class to represent musical scales, specifically church modes derived from the major scale."""
-
+    """
+    A class to represent musical scales, specifically church modes derived from the major scale.
+    """
+    # Class-level constants
+    # TODO: Use Enum for type safety?
     ALL_NOTES = np.array(["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"])
-
-    # Distance between intervalls in diatonic sclae, i.e. 2 (whole-step) or 1 (half-step)
+    # Distance between intervals in diatonic scale, i.e. 2 (whole-step) or 1 (half-step)
     DIATONIC_INTERVALS = np.array([2, 2, 1, 2, 2, 2, 1])
-
-    scales_dict = {
+    SCALES_DICT = {
         "ionian": DIATONIC_INTERVALS,
         "dorian": rotate_list(DIATONIC_INTERVALS, 1),
-        "phyrgian": rotate_list(DIATONIC_INTERVALS, 2),
+        "phrygian": rotate_list(DIATONIC_INTERVALS, 2),
         "lydian": rotate_list(DIATONIC_INTERVALS, 3),
         "mixolydian": rotate_list(DIATONIC_INTERVALS, 4),
         "aeolian": rotate_list(DIATONIC_INTERVALS, 5),
@@ -51,9 +52,9 @@ class Scale:
     def __init__(self, root_note, scale_type):
         if root_note not in self.ALL_NOTES:
             raise ValueError(f"Invalid root note: {root_note}. Must be one of {self.ALL_NOTES}.")
-        if scale_type not in self.scales_dict:
+        if scale_type not in self.SCALES_DICT:
             raise ValueError(
-                f"Invalid scale type: {scale_type}. Must be one of {list(self.scales_dict.keys())}."
+                f"Invalid scale type: {scale_type}. Must be one of {list(self.SCALES_DICT.keys())}."
             )
         self.root_note = root_note
         self.scale_type = scale_type
@@ -65,10 +66,11 @@ class Scale:
         all_notes_rot = rotate_list(Scale.ALL_NOTES, n_rot)
         return all_notes_rot
 
+    # TODO: Use of @property is not consistent
     @property
     def notes(self):
         """Return the notes of the scale."""
-        scale_dist = Scale.scales_dict[self.scale_type]
+        scale_dist = Scale.SCALES_DICT[self.scale_type]
         scale_indices = np.cumsum(scale_dist)[:-1]
         scale_indices_with_root = np.concatenate(([0], scale_indices))
         scale_chars = self.rotated_notes[scale_indices_with_root]
