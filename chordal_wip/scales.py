@@ -34,9 +34,12 @@ class Scale:
     """
     A class to represent musical scales, specifically church modes derived from the major scale.
     """
+
     # Class-level constants
     # TODO: Use Enum for type safety?
-    ALL_NOTES = np.array(["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"])
+    ALL_NOTES = np.array(
+        ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+    )
     # Distance between intervals in diatonic scale, i.e. 2 (whole-step) or 1 (half-step)
     DIATONIC_INTERVALS = np.array([2, 2, 1, 2, 2, 2, 1])
     SCALES_DICT = {
@@ -51,7 +54,9 @@ class Scale:
 
     def __init__(self, root_note, scale_type):
         if root_note not in self.ALL_NOTES:
-            raise ValueError(f"Invalid root note: {root_note}. Must be one of {self.ALL_NOTES}.")
+            raise ValueError(
+                f"Invalid root note: {root_note}. Must be one of {self.ALL_NOTES}."
+            )
         if scale_type not in self.SCALES_DICT:
             raise ValueError(
                 f"Invalid scale type: {scale_type}. Must be one of {list(self.SCALES_DICT.keys())}."
@@ -176,14 +181,18 @@ class Chord:
 
     def merge_data(self):
         # filter df for scale_type
-        mode_chords = self.MODE_CHORDS[self.MODE_CHORDS["scale_type"] == self.scale_type].copy()
+        mode_chords = self.MODE_CHORDS[
+            self.MODE_CHORDS["scale_type"] == self.scale_type
+        ].copy()
 
         # mutate chord cols
         mode_chords["triads"] = self.notes + mode_chords["triads"]
         mode_chords["7ths"] = self.notes + mode_chords["7ths"]
 
         # add chord degree information
-        merged_data = pd.merge(mode_chords, self.CHORD_DEGREES, left_index=True, right_index=True)
+        merged_data = pd.merge(
+            mode_chords, self.CHORD_DEGREES, left_index=True, right_index=True
+        )
         return merged_data
 
     # def get_chord(self, degree, chord_type=None):
@@ -234,20 +243,26 @@ class ChordProgression(Chord):
         tonic_chords = self.data[self.data["type"] == "tonic"]
         subdominant_chords = self.data[self.data["type"] == "subdominant"]
         dominant_chords = self.data[self.data["type"] == "dominant"]
-        all_dominant_chords = self.data[self.data["type"].isin(["subdominant", "dominant"])]
+        all_dominant_chords = self.data[
+            self.data["type"].isin(["subdominant", "dominant"])
+        ]
 
         progression = pd.DataFrame(columns=self.data.columns)
         for i in range(n_chords):
             if i == 0:
                 next_chord = tonic_chords.sample(n=1)
-            elif i == n_chords - 1 and not progression["name"].eq("tonic").any():
+            elif (
+                i == n_chords - 1 and not progression["name"].eq("tonic").any()
+            ):
                 next_chord = tonic_chords[tonic_chords["name"] == "tonic"]
             elif progression["tension"].sum() <= 0:
                 next_chord = all_dominant_chords.sample(n=1)
             else:
                 next_chord = tonic_chords.sample(n=1)
 
-            progression = pd.concat([progression, next_chord], ignore_index=True)
+            progression = pd.concat(
+                [progression, next_chord], ignore_index=True
+            )
 
         return progression
 
@@ -267,7 +282,9 @@ class MarkovChordProgression(Chord):
         Set initial state probaility vector
         """
         tension = self.data["tension"].values * -1
-        tension_min_max = (tension - min(tension)) / (max(tension) - min(tension))
+        tension_min_max = (tension - min(tension)) / (
+            max(tension) - min(tension)
+        )
         tension_norm = tension_min_max / sum(tension_min_max)
         return tension_norm
 
@@ -318,11 +335,15 @@ class MarkovChordProgression(Chord):
         progression = np.empty(n_chords, dtype=int)
 
         # Add first chord (first state)
-        progression[0] = np.random.choice(chord_idx, size=1, p=self.intial_state)
+        progression[0] = np.random.choice(
+            chord_idx, size=1, p=self.intial_state
+        )
 
         for i in range(1, n_chords):
             last_chord_idx = progression[i - 1]
-            progression[i] = np.random.choice(chord_idx, size=1, p=self.transition_matrix[last_chord_idx])
+            progression[i] = np.random.choice(
+                chord_idx, size=1, p=self.transition_matrix[last_chord_idx]
+            )
 
         out = self.data.iloc[progression]
         out = out.reset_index(drop=True)
