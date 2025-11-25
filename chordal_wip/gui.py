@@ -34,9 +34,12 @@ class MyBoxLayout(BoxLayout):
         # Add GridLayout for chords
         # TODO: Add logic to expand grid depending on n_chords
         self.grid = GridLayout(
-            cols=2, # n of columns
-            spacing=[10, 80],          # Add this line to increase vertical spacing between rows
-            padding=10         # Optional: Add padding around the grid (optional)
+            cols=2,  # n of columns
+            spacing=[
+                10,
+                80,
+            ],  # Add this line to increase vertical spacing between rows
+            padding=10,  # Optional: Add padding around the grid (optional)
         )
 
         # Replace your chord_labels list creation with this:
@@ -44,38 +47,38 @@ class MyBoxLayout(BoxLayout):
         for i in range(4):  # For 4 chords
             # Create a vertical layout for each chord
             chord_layout = BoxLayout(
-                orientation='vertical',
+                orientation="vertical",
                 size_hint=(0.5, None),
                 height=80,  # Fixed height for each chord display
-                spacing=2  # Space between lines
+                spacing=2,  # Space between lines
             )
 
             # Chord name label (big and bold)
             chord_name = Label(
-                text=f"Chord_{i+1}",
+                text=f"Chord_{i + 1}",
                 font_size=24,
                 bold=True,
-                halign='center',
-                valign='middle',
-                size_hint=(1, 0.4)
+                halign="center",
+                valign="middle",
+                size_hint=(1, 0.4),
             )
 
             # Roman numeral label (smaller)
             roman_numeral = Label(
                 text="",
                 font_size=18,
-                halign='center',
-                valign='middle',
-                size_hint=(1, 0.3)
+                halign="center",
+                valign="middle",
+                size_hint=(1, 0.3),
             )
 
             # Chord degree label (smallest, in parentheses)
             chord_degree = Label(
                 text="",
                 font_size=14,
-                halign='center',
-                valign='middle',
-                size_hint=(1, 0.3)
+                halign="center",
+                valign="middle",
+                size_hint=(1, 0.3),
             )
 
             # Add labels to the chord layout
@@ -85,11 +88,13 @@ class MyBoxLayout(BoxLayout):
 
             # Add the chord layout to the grid and to our list
             self.grid.add_widget(chord_layout)
-            self.chord_displays.append({
-                'name': chord_name,
-                'roman': roman_numeral,
-                'degree': chord_degree
-            })
+            self.chord_displays.append(
+                {
+                    "name": chord_name,
+                    "roman": roman_numeral,
+                    "degree": chord_degree,
+                }
+            )
 
         # Add the grid to the main layout
         self.add_widget(self.grid)
@@ -117,7 +122,9 @@ class MyBoxLayout(BoxLayout):
         self.add_widget(self.generate_button)
 
         # Add footnote at the bottom
-        footnote_layout = BoxLayout(size_hint=(1, 0.05))  # Full width, 5% height
+        footnote_layout = BoxLayout(
+            size_hint=(1, 0.05)
+        )  # Full width, 5% height
 
         # Empty label to push footnote to the right
         footnote_layout.add_widget(Label(size_hint=(0.8, 1)))
