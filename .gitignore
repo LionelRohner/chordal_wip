@@ -217,6 +217,7 @@ __marimo__/
 
 # quarto stuff
 *.html
+eda_files/
 
 # Scratchpad
 scratchpad
