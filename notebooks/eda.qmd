@@ -1,0 +1,53 @@
+---
+title: HuggingFace Explo
+jupyter: python3
+format:
+    html:
+        code-fold: false
+---
+
+# Load modules and data
+
+```{python}
+from datasets import load_dataset
+import pandas as pd
+import re
+```
+
+# Load HuggingFace ds and select a genre
+
+```{python}
+ds = load_dataset("lluccardoner/melodyGPT-song-chords-text-1")
+ds = ds['train'].to_pandas()
+
+# Filter by pop
+ds_pop = ds[ds['genres'].str.contains('pop', case=False)]
+```
+
+# Define functions
+
+```{python}
+def clean_spaces(str_in):
+  # replace n whitespaces with a single clean_spaces
+  str_out = re.sub(r'\s+', ' ', str_in)
+  return str_out
+
+
+
+```
+
+# Pre-filter
+
+```{python}
+#| eval: false
+
+pop_counts = ds_pop["chords_str"].str.split(" ").explode().value_counts()
+# print(pop_counts[pop_counts == 3])
+
+pop_counts.plot(
+    kind='bar',
+    figsize=(10, 4),
+    title='Chord Frequency Histogram'
+)
+
+```
