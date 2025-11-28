@@ -1,6 +1,6 @@
 import numpy as np
 from chordal_wip.chordcleaner import ChordCleaner
-
+import pandas as pd
 
 cc = ChordCleaner()
 
@@ -8,25 +8,40 @@ cc = ChordCleaner()
 def test_clean_spaces():
     test = "CMaj7 GMaj7   Am9                   F13"
 
-    actual = cc.clean_spaces(test)
+    actual = cc._clean_spaces(test)
     expected = "CMaj7 GMaj7 Am9 F13"
 
     assert actual == expected, f"Expected {expected}, got {actual}"
 
 
-def test_clean_spaces():
-    test = "CMaj7(13) {GMaj7} [Am9[]] F7(13)"
+def test_rm_symbols():
+    test = "CMaj7(13) {GMaj7} [Am9[]] F7(13) A* B |Em"
 
-    actual = cc.rm_parentheses(test)
-    expected = "CMaj7(13) GMaj7 Am9 F7(13)"
+    actual = cc._rm_symbols(test)
+    expected = "CMaj7(13) GMaj7 Am9 F7(13) A B Em"
 
     assert actual == expected, f"Expected {expected}, got {actual}"
 
 
 def test_standardize_chords():
-    test = "Am5- A° A* A+ A#+ A7(13+) A7(11-) A#- A5-"
+    test = "Am5- A° A+ A#+ A7(13+) A7(11-) A#- A5-"
 
-    actual = cc.standardize_chords(test)
-    expected = "Adim Adim A Aaug A#aug A7(13#) A7(11b) A#dim Adim"
+    actual = cc._standardize_chords(test)
+    expected = "Adim Adim Aaug A#aug A7(13#) A7(11b) A#dim Adim"
 
     assert actual == expected, f"Expected {expected}, got {actual}"
+
+
+def test_negative_selection():
+    test = pd.Series(
+        [
+            "Amin Amin Amin",
+            "Amin Amin outro",
+            "intro: E|--------6-- remove_this",
+            "k k k k k k k",
+        ]
+    )
+
+    actual = cc._negative_selection(test)
+    expected = pd.Series(["Amin Amin Amin", "Amin Amin", "", "k k k k k k k"])
+    assert actual.equals(expected), f"Expected {expected}, got {actual}"
