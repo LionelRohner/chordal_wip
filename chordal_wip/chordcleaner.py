@@ -27,15 +27,17 @@ class ChordCleaner:
         txt = re.sub(r"m5-", "dim", txt)
         # Convert "°" to "dim"
         txt = re.sub(r"°", "dim", txt)
+        # Convert "-" to "dim" after a 5 or an uppercase letter
+        txt = re.sub(r"([A-G][#b]?)-", r"\1dim", txt)
+        txt = re.sub(r"5-", "dim", txt)
         # Convert "+" to "aug" if it comes after an uppercase letter
         txt = re.sub(r"([A-G][#b]?)\+", r"\1aug", txt)
         # Convert "+" to "#" if it comes after a number
         txt = re.sub(r"([0-9])(\+)", r"\1#", txt)
-        # Convert "-" to "dim" after a 5 or an uppercase letter
-        txt = re.sub(r"([A-G][#b]?)-", r"\1dim", txt)
-        txt = re.sub(r"5-", "dim", txt)
         # Convert "-" to "b" after any number that is not 5
         txt = re.sub(r"([0-9])(-)(?![0-9])", r"\1b", txt)
+        # Remove no3 and no5 qaulities
+        txt = re.sub(r"\(?no[357]{1}\)?", "", txt)
         return txt
 
     def _negative_selection(self, txt):
@@ -51,8 +53,9 @@ class ChordCleaner:
         return txt
 
     def _clean_double_extensions(self, txt):
+        """ """
         # Convert slash notation to parenthesis notation
-        slash_pattern = r"(\w+\d+)/(\w+\d+)"
+        slash_pattern = r"([A-G]{1}[#b]?[Majmdinsu]{0,3}\d{1,2})/(\d{1,2})"
         txt = re.sub(slash_pattern, r"\1(\2)", txt)
         # Convert add notation to parenthesis notation
         add_pattern = r"([A-G]{1}[#b]?[Majmdinsu]{0,3}\d{1,2})add(\d{1,2})"
@@ -62,19 +65,18 @@ class ChordCleaner:
     def _filter_chords(self, txt):
         """Filter chords using a regex pattern."""
         # Anatomy of a chord
-        root = "[A-G]"
-        accidental = "[#b]?"
-        note = f"({root}{accidental})"
-        quality = "(M|Maj|maj|m|min|dim|sus|add|aug)?"
-        extension = "([1-9]|1[0-3])?"
-        extension2 = f"(\({accidental}{extension}\))?"
-        slash = f"(\/{note})?"
-        chord_anatomy = (
-            f"^{root}{accidental}{quality}{extension}{extension2}{slash}$"
-        )
+        # root = "[A-G]{1}"
+        # accidental = "[#b]?"
+        # quality = "[ADGIJMMNOSUadgijmnosu]{0,3}"  # consists of maj,min,dim,sus,add,aug,no etc
+        # extension = "\d{1,2}"
+        # extension2 = "(\({accidental}{extension}\))?"  # what about No3 e.g.?
+        # slash = f"(/{note})?"
+        # chord_anatomy = (
+        #     f"^{root}{accidental}{quality}{extension}{extension2}{slash}$"
+        # )
         # pattern = "^[A-G][#,b]?([1-9]|1[0-3])?(M|Maj|maj|m|min|dim|sus|add|aug)?([1-9]|1[0-3])?[\/]?([A,B,C,D,E,F,G]?[#,b]?|[1-9])"
-        print(chord_anatomy)
-        print(re.match(chord_anatomy, txt))
+        # print(chord_anatomy)
+        # print(re.match(chord_anatomy, txt))
         pass
 
     # Tab filter >> maybe use "-*"
