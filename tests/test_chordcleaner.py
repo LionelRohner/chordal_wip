@@ -32,6 +32,30 @@ def test_standardize_chords():
     assert actual == expected, f"Expected {expected}, got {actual}"
 
 
+def test_clean_double_extensions():
+    test = "A7/13 D7add9 E9/11 Cmaj7add6"
+
+    actual = cc._clean_double_extensions(test)
+    expected = "A7(13) D7(9) E9(11) Cmaj7(6)"
+
+    assert actual == expected, f"Expected {expected}, got {actual}"
+
+
+def test_negative_selection():
+    test = pd.Series(
+        [
+            "Amin Amin Amin",
+            "Amin Amin outro",
+            "intro: E|--------6-- remove_this",
+            "k k k k k k k",
+        ]
+    )
+
+    actual = cc._negative_selection(test)
+    expected = pd.Series(["Amin Amin Amin", "Amin Amin", "", "k k k k k k k"])
+    assert actual.equals(expected), f"Expected {expected}, got {actual}"
+
+
 def test_negative_selection():
     test = pd.Series(
         [
