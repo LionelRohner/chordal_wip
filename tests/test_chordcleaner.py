@@ -54,3 +54,12 @@ def test_negative_selection():
     actual = cc._negative_selection(test)
     expected = pd.Series(["Amin Amin Amin", "Amin Amin", "", "k k k k k k k"])
     assert actual.equals(expected), f"Expected {expected}, got {actual}"
+
+
+def test_filter_chords():
+    test = "A#M7 A#maj7 A#Maj A#Maj7(b13) A Amaj6(9) C7sus4 Fb7sus4(b5, b13) A7(11,13) Xmin7 PM7"
+
+    actual = cc._filter_chords(test)
+    expected = "A#M7 A#maj7 A#Maj A#Maj7(b13) A Amaj6(9) C7sus4 Fb7sus4(b5, b13) A7(11,13)"
+
+    assert actual == expected, f"Expected {expected}, got {actual}"
