@@ -65,19 +65,17 @@ class ChordCleaner:
     def _filter_chords(self, txt):
         """Filter chords using a regex pattern."""
         # Anatomy of a chord
-        # root = "[A-G]{1}"
-        # accidental = "[#b]?"
-        # quality = "[ADGIJMMNOSUadgijmnosu]{0,3}"  # consists of maj,min,dim,sus,add,aug,no etc
-        # extension = "\d{1,2}"
-        # extension2 = "(\({accidental}{extension}\))?"  # what about No3 e.g.?
-        # slash = f"(/{note})?"
-        # chord_anatomy = (
-        #     f"^{root}{accidental}{quality}{extension}{extension2}{slash}$"
-        # )
-        # pattern = "^[A-G][#,b]?([1-9]|1[0-3])?(M|Maj|maj|m|min|dim|sus|add|aug)?([1-9]|1[0-3])?[\/]?([A,B,C,D,E,F,G]?[#,b]?|[1-9])"
-        # print(chord_anatomy)
-        # print(re.match(chord_anatomy, txt))
-        pass
+        root = "[A-G]{1}"
+        accidental = "[#b]?"
+        quality = "[AIJMMNaijmn]{0,3}"
+        extension = r"(?:2|4|5|6|7|9|10|11|13)?"
+        modifier = r"(?:[ADGIMNOSUadgimnosu]{0,3}[24]?)?"
+        extension_2 = rf"(?:\((?:{accidental}{extension},?\s*){{1,2}}\))?"
+        slash = rf"(?:\/{root}{accidental})?"
+        chord_anatomy = rf"{root}{accidental}{quality}{extension}{modifier}{extension_2}{slash}"
+
+        chords = re.findall(chord_anatomy, txt)
+        return " ".join(chords)
 
     # Tab filter >> maybe use "-*"
     # Max length filter?
