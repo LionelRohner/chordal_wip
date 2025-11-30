@@ -3,22 +3,19 @@ import re
 
 class ChordCleaner:
     """
-    A class for data cleanup for lluccardoner/melodyGPT-song-chords-text-1
+    A class for cleaning and standardizing chord notations in text data.
     """
 
     def __init__(self, threshold=3):
         self.threshold = threshold
 
     def _clean_spaces(self, txt):
-        """Replace multiple whitespaces with a single space."""
-        # replace n whitespaces with a single clean_spaces
+        """Remove specific symbols such as parentheses, asterisks, and pipes."""
         txt = re.sub(r"\s+", " ", txt)
         return txt.strip()
 
-    # TODO: What to do with normal parenthesis?
     def _rm_symbols(self, txt):
-        """Remove symbols, such as parentheses, asterisk and pipes."""
-        # Remove parentheses and their contents
+        """Replace multiple whitespace characters with a single space."""
         return re.sub(r"(\[|\]|\{|\}|\*|\|)", "", txt)
 
     def _standardize_chords(self, txt):
@@ -41,6 +38,24 @@ class ChordCleaner:
         return txt
 
     def _negative_selection(self, txt):
+        """
+        Filters the input text by removing words that appear a number of times
+        less than or equal to a predefined threshold.
+
+        This method counts the occurrences of each word in the input text,
+        filters out the words that meet the filtering criteria, and then
+        removes those words from the text. The removal of words is done in
+        such a way to avoid matching substrings.
+
+        Args:
+            txt (pd.Series): A pandas Series containing text data where
+                             each entry is a string to be processed.
+
+        Returns:
+            pd.Series: A new Series with filtered text entries where words
+                        that appeared equal to or below the threshold have
+                        been removed.
+        """
         counts = txt.str.split(" ").explode().value_counts()
 
         counts_filtered = counts[counts <= self.threshold].index
@@ -53,7 +68,13 @@ class ChordCleaner:
         return txt
 
     def _clean_double_extensions(self, txt):
-        """ """
+        """
+        Standardize chord notation with double extensions by placing all of them in parentheses.
+        Some example:
+            - A7add13 is converted to A7(13)
+            - C7/13 is converted to C7(13)
+            - C6/9 is converted to C6(9), which is not common but avoids issues with identification of slash chords
+        """
         # Convert slash notation to parenthesis notation
         slash_pattern = r"([A-G]{1}[#b]?[Majmdinsu]{0,3}\d{1,2})/(\d{1,2})"
         txt = re.sub(slash_pattern, r"\1(\2)", txt)
@@ -63,7 +84,7 @@ class ChordCleaner:
         return txt
 
     def _filter_chords(self, txt):
-        """Filter chords using a regex pattern."""
+        """Extract and filter valid chord notations from the given text."""
         # Anatomy of a chord
         root = "[A-G]{1}"
         accidental = "[#b]?"
@@ -81,6 +102,7 @@ class ChordCleaner:
     # Max length filter?
 
     def clean(self, chord_series):
+        """Process and clean the provided Series of chord notations."""
         chord_series = chord_series.apply(self._rm_symbols)
         chord_series = chord_series.apply(self._standardize_chords)
         chord_series = chord_series.apply(self._clean_spaces)
