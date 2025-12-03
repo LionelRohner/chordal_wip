@@ -37,7 +37,7 @@ class ChordCleaner:
         txt = re.sub(r"\(?no[357]{1}\)?", "", txt)
         return txt
 
-    def _negative_selection(self, txt):
+    def _negative_selection(self, chord_series):
         """
         Filters the input text by removing words that appear a number of times
         less than or equal to a predefined threshold.
@@ -48,7 +48,7 @@ class ChordCleaner:
         such a way to avoid matching substrings.
 
         Args:
-            txt (pd.Series): A pandas Series containing text data where
+            chord_series (pd.Series): A pandas Series containing text data where
                              each entry is a string to be processed.
 
         Returns:
@@ -56,7 +56,7 @@ class ChordCleaner:
                         that appeared equal to or below the threshold have
                         been removed.
         """
-        counts = txt.str.split(" ").explode().value_counts()
+        counts = chord_series.str.split(" ").explode().value_counts()
 
         counts_filtered = counts[counts <= self.threshold].index
         # re.sub acts sequentially, hence this sorting avoids filtering substrings
@@ -64,8 +64,10 @@ class ChordCleaner:
         counts_filtered = [re.escape(pattern) for pattern in counts_filtered]
 
         neg_selection_patterns = f"({('|').join(counts_filtered)})"
-        txt = txt.apply(lambda x: re.sub(neg_selection_patterns, "", x).strip())
-        return txt
+        chord_series = chord_series.apply(
+            lambda x: re.sub(neg_selection_patterns, "", x).strip()
+        )
+        return chord_series
 
     def _clean_double_extensions(self, txt):
         """
@@ -103,10 +105,18 @@ class ChordCleaner:
 
     def clean(self, chord_series):
         """Process and clean the provided Series of chord notations."""
+
+        # Negative selection
+        chord_series = self._negative_selection(chord_series)
+
+        # General clean-up
         chord_series = chord_series.apply(self._rm_symbols)
         chord_series = chord_series.apply(self._standardize_chords)
         chord_series = chord_series.apply(self._clean_spaces)
         chord_series = chord_series.str.strip()
         chord_series = chord_series[chord_series != ""]
+
+        # Positive selection
+        chord_series = chord_series.apply(self._filter_chords)
 
         return chord_series
