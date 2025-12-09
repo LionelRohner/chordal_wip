@@ -105,7 +105,6 @@ class ChordCleaner:
 
     def clean(self, chord_series):
         """Process and clean the provided Series of chord notations."""
-
         # Negative selection
         chord_series = self._negative_selection(chord_series)
 
