@@ -12,42 +12,116 @@ format:
 from datasets import load_dataset
 import pandas as pd
 import re
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import numpy as np
+from chordal_wip.chordcleaner import ChordCleaner
 ```
 
-# Load HuggingFace ds and select a genre
+## Load HuggingFace ds and select a genre
 
 ```{python}
 ds = load_dataset("lluccardoner/melodyGPT-song-chords-text-1")
 ds = ds['train'].to_pandas()
 
 # Filter by pop
-ds_pop = ds[ds['genres'].str.contains('pop', case=False)]
+ds_pop = ds[ds['genres'].str.contains('pop', case=False)].reset_index()
+ds_pop = ds_pop[ds_pop["chords_str"].notna()]
+
+# Make set smaller since my funcs are probably not super efficient
+ds_pop = ds_pop.iloc[0:1000]
 ```
 
-# Define functions
+## Use ChordCleaner
 
 ```{python}
-def clean_spaces(str_in):
-  # replace n whitespaces with a single clean_spaces
-  str_out = re.sub(r'\s+', ' ', str_in)
-  return str_out
+cc = ChordCleaner(threshold = 3)
 
-
-
+print(ds_pop[["chords_str"]])
+ds_pop["chords_str_clean"] = cc.clean(ds_pop["chords_str"])
 ```
 
-# Pre-filter
+## Do some eda
 
 ```{python}
-#| eval: false
+# Stats about chord progression length
+ds_pop["chord_count"] = ds_pop["chords_str_clean"].apply(lambda x: len(x.split()))
+print(f"Descriptive stats about chord progression length:\n {ds_pop["chord_count"].describe()}")
+print("\n\n")
 
-pop_counts = ds_pop["chords_str"].str.split(" ").explode().value_counts()
-# print(pop_counts[pop_counts == 3])
+# Common chords
+all_chords = ds_pop["chords_str_clean"].str.split().explode()
+print(f"Top 20 common chords: \n{all_chords.value_counts().head(10)}")
 
-pop_counts.plot(
+print("\n\n")
+print(f"Top 20 least common chords: \n{all_chords.value_counts().tail(10)}")
+print("These should not totally weird!")
+```
+
+## Plot common chords (top n)
+
+```{python}
+
+pop_counts = ds_pop["chords_str_clean"].str.split(" ").explode().value_counts()
+n = 50
+pop_counts.head(50).plot(
     kind='bar',
-    figsize=(10, 4),
+    figsize=(50, 4),
     title='Chord Frequency Histogram'
 )
+```
+
+## Chord transition pattern
+
+```{python}
+from collections import Counter
+
+# Create chord transitions
+transitions = []
+for progression in ds_pop["chords_str_clean"]:
+    chords = progression.split()
+    transitions.extend(list(zip(chords[:-1], chords[1:])))
+
+# Count transitions
+transition_counts = Counter(transitions)
+print(transition_counts.most_common(20))  # Top 20 transitions
+
+```
+
+## PCA
+
+```{python}
+# Create the document-term matrix
+chord_matrix = pd.get_dummies(all_chords).groupby(level=0).sum()
+
+# Check the shape of the chord matrix
+print(f"Shape of the chord matrix: {chord_matrix.shape}")
+
+# 3. Standardize the data
+scaler = StandardScaler()
+chord_matrix_scaled = scaler.fit_transform(chord_matrix)
+
+# 4. Perform PCA
+pca = PCA(n_components=2)
+pca_result = pca.fit_transform(chord_matrix_scaled)
+
+# Create a DataFrame for the PCA results
+pca_df = pd.DataFrame(data=pca_result, columns=['PC1', 'PC2'])
+
+# Add chord labels (optional)
+pca_df['Chord'] = chord_matrix.index
+
+# 5. Visualize the PCA results
+plt.figure(figsize=(10, 6))
+plt.scatter(pca_df['PC1'], pca_df['PC2'])
+for i, txt in enumerate(pca_df['Chord']):
+    plt.annotate(txt, (pca_df['PC1'][i], pca_df['PC2'][i]), fontsize=8)
+
+plt.title('PCA of Chords')
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+plt.grid()
+plt.show()
 
 ```
