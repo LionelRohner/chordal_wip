@@ -9,3 +9,7 @@ A work-in-progress Python application for generating chord progressions using mu
 - Interactive GUI to select root notes, modes, and chord types
 - Markov chain-based progression generation for musically interesting sequences
 - Kivy GUI
+
+## Run GUI (experimental)
+
+Run `python -m chordal_wip.gui`
