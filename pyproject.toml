@@ -1,5 +1,5 @@
 [project]
-name = "chordal-wip"
+name = "chordal_wip"
 version = "0.2.0"
 description = "A Python application for generating chord progressions using music theory and Markov chains, with a Kivy-based GUI."
 authors = [
