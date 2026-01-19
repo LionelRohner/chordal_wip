@@ -1,4 +1,5 @@
 import re
+from time import perf_counter
 
 
 class ChordCleaner:
@@ -43,9 +44,8 @@ class ChordCleaner:
         less than or equal to a predefined threshold.
 
         This method counts the occurrences of each word in the input text,
-        filters out the words that meet the filtering criteria, and then
-        removes those words from the text. The removal of words is done in
-        such a way to avoid matching substrings.
+        filters out the words that are below a threshold (default = 3), and then
+        removes those words from the text.
 
         Args:
             chord_series (pd.Series): A pandas Series containing text data where
@@ -56,17 +56,16 @@ class ChordCleaner:
                         that appeared equal to or below the threshold have
                         been removed.
         """
-        counts = chord_series.str.split(" ").explode().value_counts()
+        word_count = chord_series.str.split(" ").explode().value_counts()
+        # Sets have O(1) lookup time
+        rare_words = set(word_count[word_count <= self.threshold].index)
 
-        counts_filtered = counts[counts <= self.threshold].index
-        # re.sub acts sequentially, hence this sorting avoids filtering substrings
-        counts_filtered = sorted(counts_filtered, key=len, reverse=True)
-        counts_filtered = [re.escape(pattern) for pattern in counts_filtered]
+        def filter_rare_words(txt):
+            words = txt.split()
+            filtered_words = [word for word in words if word not in rare_words]
+            return " ".join(filtered_words)
 
-        neg_selection_patterns = f"({('|').join(counts_filtered)})"
-        chord_series = chord_series.apply(
-            lambda x: re.sub(neg_selection_patterns, "", x).strip()
-        )
+        chord_series = chord_series.apply(filter_rare_words)
         return chord_series
 
     def _clean_double_extensions(self, txt):
@@ -106,16 +105,41 @@ class ChordCleaner:
     def clean(self, chord_series):
         """Process and clean the provided Series of chord notations."""
         # Negative selection
+        start = perf_counter()
         chord_series = self._negative_selection(chord_series)
+        stop = perf_counter()
+        print(f"[_negative_selection] Elapsed: {(stop - start):.5f}")
 
         # General clean-up
+        start = perf_counter()
         chord_series = chord_series.apply(self._rm_symbols)
+        stop = perf_counter()
+        print(f"[_rm_symbols] Elapsed: {(stop - start):.5f}")
+
+        start = perf_counter()
         chord_series = chord_series.apply(self._standardize_chords)
+        stop = perf_counter()
+        print(f"[_standardize_chords] Elapsed: {(stop - start):.5f}")
+
+        start = perf_counter()
         chord_series = chord_series.apply(self._clean_spaces)
+        stop = perf_counter()
+        print(f"[_clean_spaces] Elapsed: {(stop - start):.5f}")
+
+        start = perf_counter()
         chord_series = chord_series.str.strip()
+        stop = perf_counter()
+        print(f"[strip] Elapsed: {(stop - start):.5f}")
+
+        start = perf_counter()
         chord_series = chord_series[chord_series != ""]
+        stop = perf_counter()
+        print(f"[rm empty strings] Elapsed: {(stop - start):.5f}")
 
         # Positive selection
+        start = perf_counter()
         chord_series = chord_series.apply(self._filter_chords)
+        stop = perf_counter()
+        print(f"[_filter_chords] Elapsed: {(stop - start):.6f}")
 
         return chord_series
