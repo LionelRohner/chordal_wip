@@ -81,6 +81,14 @@ class Scale:
         scale_chars = self.rotated_notes[scale_indices_with_root]
         return scale_chars
 
+    def __str__(self):
+        return (
+            f"Scale:\n"
+            f"  Root: {self.root_note}\n"
+            f"  Scale Type: {self.scale_type}\n"
+            f"  Notes: {self.notes}"
+        )
+
 
 class Chord:
     # Define chord formulas as distances from the root (in semitones)
@@ -194,6 +202,14 @@ class Chord:
             mode_chords, self.CHORD_DEGREES, left_index=True, right_index=True
         )
         return merged_data
+
+    def __str__(self):
+        return (
+            f"Chord:\n"
+            f"  Root: {self.root_note}\n"
+            f"  Scale Type: {self.scale_type}\n"
+            f"  Data: {self.data}\n"
+        )
 
     # def get_chord(self, degree, chord_type=None):
     #     """
