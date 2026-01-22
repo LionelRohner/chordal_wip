@@ -1,3 +1,17 @@
+# TODO Shortterm
+
+* Finish cleaning data
+* Find a way to predict scale
+* Convert scale to roman numerals
+* Calculate probabilities of chord degree changes
+  * Calc probs for each scale, e.g. C major, D major etc 
+  * Calc probs for scale class, e.g. major, minor and maybe others?
+
+# TODO Longterm
+
+* Finish my progresh mode: The idea is you have 1, 2, or maybe 3 chords and want to complete the progression.
+
+
 check out this:
 
 - https://www.hooktheory.com/cheat-sheet/key-popularity#all-keys
@@ -5,4 +19,4 @@ check out this:
 
 todo
 
-- handle # and ♭
+- handle # and ♭ (still necessary?)
