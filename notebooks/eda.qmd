@@ -9,13 +9,21 @@ format:
 # Load modules and data
 
 ```{python}
-from datasets import load_dataset
-import pandas as pd
+# Standard library imports
 import re
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
-import matplotlib.pyplot as plt
+from collections import Counter
+
+# Third-party library imports
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sn
+from datasets import load_dataset
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.decomposition import PCA
+from datasets import load_dataset
+
+# Local application/library imports
 from chordal_wip.chordcleaner import ChordCleaner
 ```
 
@@ -30,7 +38,9 @@ ds_pop = ds[ds['genres'].str.contains('pop', case=False)].reset_index()
 ds_pop = ds_pop[ds_pop["chords_str"].notna()]
 
 # Make set smaller since my funcs are probably not super efficient
-ds_pop = ds_pop.iloc[0:1000]
+ds_pop = ds_pop.iloc[2843]
+#ds_pop.to_csv("test.csv")
+ds_pop.head()
 ```
 
 ## Use ChordCleaner
@@ -75,8 +85,6 @@ pop_counts.head(50).plot(
 ## Chord transition pattern
 
 ```{python}
-from collections import Counter
-
 # Create chord transitions
 transitions = []
 for progression in ds_pop["chords_str_clean"]:
@@ -89,30 +97,59 @@ print(transition_counts.most_common(20))  # Top 20 transitions
 
 ```
 
+## Transition matrix
+
+This should be mapped to roman numeral notation, i.e. root-independent.
+
+```{python}
+#| eval: false
+ 
+# Encode chords as integers
+chords = ds_pop["chords_str_clean"].str.split().explode()
+le = LabelEncoder()
+chords_encoded = le.fit_transform(chords)
+
+# Build transition matrix
+n_chords = len(le.classes_)
+transition_matrix = np.zeros((n_chords, n_chords))
+
+for progression in ds_pop["chords_str_clean"]:
+    chords = progression.split()
+    encoded = le.transform(chords)
+    for i in range(len(encoded) - 1):
+        transition_matrix[encoded[i], encoded[i + 1]] += 1
+
+# Normalize to probabilities
+transition_matrix = transition_matrix / transition_matrix.sum(axis=1, keepdims=True)
+
+sn.heatmap(transition_matrix, xticklabels=le.classes_, yticklabels=le.classes_)
+plt.title("Pop Chord Transition Matrix")
+plt.show()
+```
+
 ## PCA
 
 ```{python}
+#| eval: false
 # Create the document-term matrix
 chord_matrix = pd.get_dummies(all_chords).groupby(level=0).sum()
 
 # Check the shape of the chord matrix
 print(f"Shape of the chord matrix: {chord_matrix.shape}")
 
-# 3. Standardize the data
+# Standardize the data
 scaler = StandardScaler()
 chord_matrix_scaled = scaler.fit_transform(chord_matrix)
 
-# 4. Perform PCA
+# Perform PCA
 pca = PCA(n_components=2)
 pca_result = pca.fit_transform(chord_matrix_scaled)
 
 # Create a DataFrame for the PCA results
 pca_df = pd.DataFrame(data=pca_result, columns=['PC1', 'PC2'])
-
-# Add chord labels (optional)
 pca_df['Chord'] = chord_matrix.index
 
-# 5. Visualize the PCA results
+# Visualize the PCA results
 plt.figure(figsize=(10, 6))
 plt.scatter(pca_df['PC1'], pca_df['PC2'])
 for i, txt in enumerate(pca_df['Chord']):
@@ -123,5 +160,20 @@ plt.xlabel('Principal Component 1')
 plt.ylabel('Principal Component 2')
 plt.grid()
 plt.show()
+```
 
+```{python}
+#| eval: false
+# Does this LLM-code do what I want?
+pca_df['genres'] = ds_pop["genres"]
+
+plt.figure(figsize=(12, 8))
+sn.scatterplot(data=pca_df, x='PC1', y='PC2', hue='genres', style='genres', palette='deep')
+
+plt.title('PCA of Chords Grouped by Genre')
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.grid()
+plt.show()
 ```
