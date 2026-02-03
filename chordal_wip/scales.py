@@ -365,3 +365,34 @@ class MarkovChordProgression(Chord):
         out = out.reset_index(drop=True)
 
         return out
+
+
+# Lazy init ----
+_ref_scales = None
+
+
+def generate_ref_scales():
+    modes = ["ionian"]  # , "aeolian"]
+    keys = "C"  # Scale.ALL_NOTES
+    chord_type = "triads"
+
+    ref_scales_dict = {}
+
+    for mode in modes:
+        for key in keys:
+            scale_chords = Chord(Scale(key, mode)).data[chord_type].tolist()
+            scale_key = f"{key}_{mode}"
+            ref_scales_dict.update({scale_key: scale_chords})
+
+    return ref_scales_dict
+
+
+def get_ref_scales():
+    """
+    Return the cached scales dictionary. If it hasn't been generated yet, generate it first.
+    """
+    global _ref_scales
+    print(_ref_scales)
+    if _ref_scales is None:
+        _ref_scales = generate_ref_scales()
+    return _ref_scales
