@@ -150,7 +150,7 @@ class Chord:
             ),
             pd.DataFrame(
                 {
-                    "scale_type": ["aolian"] * 7,
+                    "scale_type": ["aeolian"] * 7,
                     "triads": rotate_list(IONIAN_BASE_CHORDS, 5),
                     "7ths": rotate_list(IONIAN_7_CHORDS, 5),
                     "roman": ["i", "ii°", "♭III", "iv", "v", "♭VI", "♭VII"],
