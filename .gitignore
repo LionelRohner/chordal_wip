@@ -213,7 +213,7 @@ __marimo__/
 *.db
 
 # csv
-*.csv
+*.csv*
 
 # quarto stuff
 *.html
