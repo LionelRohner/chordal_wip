@@ -83,19 +83,15 @@ class KeyPredictor:
     def _sort_chords(self, counts_unsorted: pd.Series) -> pd.Series:
         # Find key with highest value
         max_key = counts_unsorted.idxmax()
-        # print(f"max_key : {max_key}")
 
         # Get sorted index as a list
         sorted_index = counts_unsorted.sort_index().index.tolist()
-        # print(f"sorted_index : {sorted_index}")
 
         # Find position of max_key
         max_key_idx = sorted_index.index(max_key)
-        # print(f"max_key_idx : {max_key_idx}")
 
         # Rotate the index list
         rotated_index = rotate_list(sorted_index, max_key_idx, dir="left")
-        # print(f"rotated_index : {rotated_index}")
 
         return counts_unsorted[rotated_index]
 
@@ -113,18 +109,61 @@ class KeyPredictor:
         return f"KeyPredictor:\n{df_summary}"
 
 
+# Testing
+
 test = "Gmaj G/B Cmaj Cmin Gmaj Bmin C/E Dmin Gmaj Bmin C/E Dmaj Cmaj Cmaj Dmaj Gmaj Emin Cmaj Dmaj Bmaj Gmaj Bmaj Gmaj Cmin Gmaj Emin Cmaj Dmaj"
 
 kp = KeyPredictor(test)
 
-# print(kp)
+progression = kp.chord_proportions
 
-ref_scales = scales.get_ref_scales()
+print(progression)
 
-reference = ref_scales
+reference = scales.get_ref_scales()
+print(f"reference : {reference}")
+
+# Iterative solution with isin ----
+
+
+def match_to_scale(progression: pd.Series, ref_scale: set):
+    chords = progression.keys()
+    weights = progression.values
+    print(f"weights : {weights}")
+
+    return chords.isin(ref_scale) * weights
+
+
+reference["match"] = reference["chords"].apply(
+    lambda scale: match_to_scale(progression, scale)
+)
+
+reference["adj_match"] = reference.match * reference.weights
+
+reference["score"] = reference["match"].apply(sum)
 print(reference)
+reference.to_csv("test.csv")
+exit()
 
-progression = pd.Series(["Gmaj", "Cmaj", "Bmin", ...])
-# matches = progression.map(reference)
 
-# print(ref_scales)
+# LinAlg solution ----
+
+ref_chords = sorted(set(reference["chords"].explode()))
+
+progression_vector = [1 if chord in progression else 0 for chord in ref_chords]
+# print(f"progression_vector : {progression_vector}")
+
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+
+scale_vector = kp.chord_proportions.values
+print(f"scale_vector : {scale_vector}")
+
+# Reshape vectors to 2D arrays for sklearn
+progression_array = np.array(progression_vector).reshape(1, -1)
+print(f"progression_array : {progression_array}")
+
+scale_array = np.array([scale_vector])  # Replace with all scale vectors
+print(f"scale_array : {scale_array}")
+
+similarity = cosine_similarity(progression_array, scale_array)
+print(f"similarity : {similarity}")
