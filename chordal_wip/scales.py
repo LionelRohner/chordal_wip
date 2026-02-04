@@ -2,32 +2,7 @@ from typing import ValuesView
 import pandas as pd
 import numpy as np
 import random
-
-
-def rotate_list(arr, n, dir="left"):
-    """
-    Rotate array elements left or right by n positions.
-
-    Args:
-        arr: Input array
-        n: Number of positions to rotate (wraps around if n > len (arr))
-        dir: Rotation direction ('left' or 'right')
-
-    Returns:
-        Rotated array
-    """
-    if len(arr) == 0:
-        return arr
-
-    arr = np.array(arr)
-    n = n % len(arr)
-
-    if dir == "left":
-        return np.concatenate((arr[n:], arr[:n]))
-    elif dir == "right":
-        return np.concatenate((arr[-n:], arr[:-n]))
-    else:
-        raise ValueError("Direction must be 'left' or 'right'!")
+from chordal_wip.helpers import rotate_list
 
 
 class Scale:
@@ -90,6 +65,7 @@ class Scale:
         )
 
 
+# TODO: Refactor
 class Chord:
     # Define chord formulas as distances from the root (in semitones)
     CHORD_FORMULAS = {
@@ -372,19 +348,21 @@ _ref_scales = None
 
 
 def generate_ref_scales():
-    modes = ["ionian"]  # , "aeolian"]
-    keys = "C"  # Scale.ALL_NOTES
+    modes = ["ionian", "aeolian"]
+    keys = Scale.ALL_NOTES
     chord_type = "triads"
 
-    ref_scales_dict = {}
+    ref_scales_list = []
 
     for mode in modes:
         for key in keys:
             scale_chords = Chord(Scale(key, mode)).data[chord_type].tolist()
-            scale_key = f"{key}_{mode}"
-            ref_scales_dict.update({scale_key: scale_chords})
+            # scale_key = f"{key}_{mode}"
+            ref_scales_list.append(
+                {"key": key, "mode": mode, "chords": scale_chords}
+            )
 
-    return ref_scales_dict
+    return pd.DataFrame(ref_scales_list)
 
 
 def get_ref_scales():
@@ -392,7 +370,8 @@ def get_ref_scales():
     Return the cached scales dictionary. If it hasn't been generated yet, generate it first.
     """
     global _ref_scales
-    print(_ref_scales)
+
     if _ref_scales is None:
         _ref_scales = generate_ref_scales()
+
     return _ref_scales
