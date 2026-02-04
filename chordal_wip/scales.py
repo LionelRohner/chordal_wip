@@ -351,15 +351,26 @@ def generate_ref_scales():
     modes = ["ionian", "aeolian"]
     keys = Scale.ALL_NOTES
     chord_type = "triads"
+    # Weights are currently based on this: https://chordprogressor.com/guides/common-chord-progressions
+    weights_mapping = {
+        "ionian": [4, 2, 1, 3, 3, 2, 1],
+        "aeolian": [4, 1, 2, 2, 3, 2, 2],
+    }
 
     ref_scales_list = []
 
     for mode in modes:
         for key in keys:
-            scale_chords = Chord(Scale(key, mode)).data[chord_type].tolist()
+            # scale_chords = Chord(Scale(key, mode)).data[chord_type].tolist()
+            scale_chords = set(Chord(Scale(key, mode)).data[chord_type])
             # scale_key = f"{key}_{mode}"
             ref_scales_list.append(
-                {"key": key, "mode": mode, "chords": scale_chords}
+                {
+                    "key": key,
+                    "mode": mode,
+                    "chords": scale_chords,
+                    "weights": weights_mapping[mode],
+                }
             )
 
     return pd.DataFrame(ref_scales_list)
