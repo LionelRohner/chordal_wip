@@ -119,6 +119,9 @@ progression = kp.chord_proportions
 
 
 reference = scales.get_ref_scales()
+# reference.to_csv("test.csv")
+
+# TODO: Create function that can be applied all references
 d = reference["chord_weights"].iloc[7]
 
 out = []
@@ -131,7 +134,6 @@ for chord, weight in progression.items():
     out.append(res)
 print(out)
 
-# NEXT PUT THIS UP HERE INTO A FUNCTION
 
 exit()
 

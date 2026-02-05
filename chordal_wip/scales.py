@@ -352,27 +352,21 @@ def generate_ref_scales():
     modes = ["ionian", "aeolian"]
     keys = Scale.ALL_NOTES
     chord_type = "triads"
-    # Weights are currently based on this: https://chordprogressor.com/guides/common-chord-progressions
-    weights_mapping = {
-        "ionian": [4, 2, 1, 3, 3, 2, 1],
-        "aeolian": [4, 1, 2, 2, 3, 2, 2],
-    }
+    # Current rationale: Favor tonic to avoid introducing genre-specific bias
+    weights = [2, 1, 1, 1, 1, 1, 1]
 
     ref_scales_list = []
 
     for mode in modes:
         for key in keys:
             scale_chords = Chord(Scale(key, mode)).data[chord_type].tolist()
-            # scale_key = f"{key}_{mode}"
             ref_scales_list.append(
                 {
                     "key": key,
                     "mode": mode,
                     "chord_weights": {
                         chord: weight
-                        for (chord, weight) in zip(
-                            scale_chords, weights_mapping[mode]
-                        )
+                        for (chord, weight) in zip(scale_chords, weights)
                     },
                 }
             )
