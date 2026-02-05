@@ -347,6 +347,7 @@ class MarkovChordProgression(Chord):
 _ref_scales = None
 
 
+# TODO: decide how to handle weights
 def generate_ref_scales():
     modes = ["ionian", "aeolian"]
     keys = Scale.ALL_NOTES
@@ -361,15 +362,18 @@ def generate_ref_scales():
 
     for mode in modes:
         for key in keys:
-            # scale_chords = Chord(Scale(key, mode)).data[chord_type].tolist()
-            scale_chords = set(Chord(Scale(key, mode)).data[chord_type])
+            scale_chords = Chord(Scale(key, mode)).data[chord_type].tolist()
             # scale_key = f"{key}_{mode}"
             ref_scales_list.append(
                 {
                     "key": key,
                     "mode": mode,
-                    "chords": scale_chords,
-                    "weights": weights_mapping[mode],
+                    "chord_weights": {
+                        chord: weight
+                        for (chord, weight) in zip(
+                            scale_chords, weights_mapping[mode]
+                        )
+                    },
                 }
             )
 
