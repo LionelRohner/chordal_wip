@@ -117,10 +117,23 @@ kp = KeyPredictor(test)
 
 progression = kp.chord_proportions
 
-print(progression)
 
 reference = scales.get_ref_scales()
-print(f"reference : {reference}")
+d = reference["chord_weights"].iloc[7]
+
+out = []
+for chord, weight in progression.items():
+    if chord in d.keys():
+        scale_weight = d.get(chord)
+        res = scale_weight * weight
+    else:
+        res = 0
+    out.append(res)
+print(out)
+
+# NEXT PUT THIS UP HERE INTO A FUNCTION
+
+exit()
 
 # Iterative solution with isin ----
 
@@ -128,7 +141,6 @@ print(f"reference : {reference}")
 def match_to_scale(progression: pd.Series, ref_scale: set):
     chords = progression.keys()
     weights = progression.values
-    print(f"weights : {weights}")
 
     return chords.isin(ref_scale) * weights
 
@@ -137,11 +149,11 @@ reference["match"] = reference["chords"].apply(
     lambda scale: match_to_scale(progression, scale)
 )
 
-reference["adj_match"] = reference.match * reference.weights
-
 reference["score"] = reference["match"].apply(sum)
+
 print(reference)
-reference.to_csv("test.csv")
+# reference["adj_match"] = reference["match"] * reference["weights"]
+# reference.to_csv("test.csv")
 exit()
 
 
