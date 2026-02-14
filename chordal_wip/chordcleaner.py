@@ -10,6 +10,12 @@ class ChordCleaner:
     def __init__(self, threshold=3):
         self.threshold = threshold
 
+    def _remove_tab_notation(self, txt):
+        """Remove tablature notation from the text."""
+        # This pattern looks for sequences with many dashes and numbers
+        tab_pattern = r"\b[A-G]#?b?\|[-0-9hpsbrv?]+[\| ]+"
+        return re.sub(tab_pattern, "", txt)
+
     def _clean_spaces(self, txt):
         """Remove specific symbols such as parentheses, asterisks, and pipes."""
         txt = re.sub(r"\s+", " ", txt)
@@ -21,6 +27,12 @@ class ChordCleaner:
 
     def _standardize_chords(self, txt):
         """Apply standardization rules to chord notations."""
+        # Convert major 7th chords from "C7M" to "Cmaj7"
+        txt = re.sub(r"([A-G][#b]?)7M", r"\1maj7", txt)
+        # Convert minor chords from "Cm" to "Cmin"
+        txt = re.sub(r"([A-G][#b]?)m\b", r"\1min", txt)
+        # Convert major chords from "C" to "Cmaj" when not followed by other chord symbols
+        txt = re.sub(r"\b([A-G][#b]?)(?![0-9a-zA-Z])", r"\1maj", txt)
         # Convert "m5-" to "dim"
         txt = re.sub(r"m5-", "dim", txt)
         # Convert "°" to "dim"
@@ -56,6 +68,9 @@ class ChordCleaner:
                         that appeared equal to or below the threshold have
                         been removed.
         """
+        if self.threshold is None:
+            return chord_series
+
         word_count = chord_series.str.split(" ").explode().value_counts()
         # Sets have O(1) lookup time
         rare_words = set(word_count[word_count <= self.threshold].index)
@@ -104,42 +119,82 @@ class ChordCleaner:
 
     def clean(self, chord_series):
         """Process and clean the provided Series of chord notations."""
+
+        # Tab Removal
+        start = perf_counter()
+        chord_series = chord_series.apply(self._remove_tab_notation)
+        print(f"chord_series :\n {chord_series}")
+        stop = perf_counter()
+        print(f"[_remove_tab_notation] Elapsed: {(stop - start):.5f}")
+
         # Negative selection
         start = perf_counter()
         chord_series = self._negative_selection(chord_series)
+        # print(f"chord_series :\n {chord_series}")
         stop = perf_counter()
         print(f"[_negative_selection] Elapsed: {(stop - start):.5f}")
 
         # General clean-up
         start = perf_counter()
         chord_series = chord_series.apply(self._rm_symbols)
+        # print(f"chord_series :\n {chord_series}")
         stop = perf_counter()
         print(f"[_rm_symbols] Elapsed: {(stop - start):.5f}")
 
         start = perf_counter()
         chord_series = chord_series.apply(self._standardize_chords)
+        # print(f"chord_series :\n {chord_series}")
         stop = perf_counter()
         print(f"[_standardize_chords] Elapsed: {(stop - start):.5f}")
 
         start = perf_counter()
         chord_series = chord_series.apply(self._clean_spaces)
+        # print(f"chord_series :\n {chord_series}")
         stop = perf_counter()
         print(f"[_clean_spaces] Elapsed: {(stop - start):.5f}")
 
         start = perf_counter()
         chord_series = chord_series.str.strip()
+        # print(f"chord_series :\n {chord_series}")
         stop = perf_counter()
         print(f"[strip] Elapsed: {(stop - start):.5f}")
 
         start = perf_counter()
         chord_series = chord_series[chord_series != ""]
+        # print(f"chord_series :\n {chord_series}")
         stop = perf_counter()
         print(f"[rm empty strings] Elapsed: {(stop - start):.5f}")
 
         # Positive selection
         start = perf_counter()
         chord_series = chord_series.apply(self._filter_chords)
+        # print(f"chord_series :\n {chord_series}")
         stop = perf_counter()
         print(f"[_filter_chords] Elapsed: {(stop - start):.6f}")
 
         return chord_series
+
+
+# Issues to fix ----
+# Before: B|--5/7---5-5-5---7--| G|-------------------| D|-------------------| A|-------------------| E|-------------------| Am Am7/G Am/F# Am7/G Am Am7/G Am/F# Am7/G (Am - G) F G F G (Am - G) F G AbÂº Am G F E7 Am G F E7 Am Am7/G Am/F# Am7/G Am Am7/G Am/F# Am7/G (Am - G) F G F G (Am - G) F G AbÂº Am G F E7 Am G F E7 Am G F E7 Am G F E7 F G F G AbÂº (Am - G - F - E) F G F G (Am - G) F G E7 Am G F E7 Am G F E7 Am G F E7 Am G F E7 Am G F E7
+# After: Gdim Ddim Adim Edim Am Am7/G Am/F# Am7/G Am Am7/G Am/F# Am7/G Am G F G F G Am G F G Ab Am G F E7 Am G F E7 Am Am7/G Am/F# Am7/G Am Am7/G Am/F# Am7/G Am G F G F G Am G F G Ab Am G F E7 Am G F E7 Am G F E7 Am G F E7 F G F G Ab Am G F E F G F G Am G F G E7 Am G F E7 Am G F E7 Am G F E7 Am G F E7 Am G F E7i
+#
+# Somehow G|----- and D|----- become Gdim and Ddim....
+
+import pandas as pd
+
+cc = ChordCleaner(threshold=None)
+
+test = pd.Series(
+    [
+        "B|--5/7---5-5-5---7--| G|-------------------|",
+        "Am Am7/G Am/F# F G AbÂº",
+        "(Am - G - F - E) F G F ",
+        "Intro C7M G Am Em C7M G",
+    ]
+)
+
+# print(cc.clean(test))
+
+
+print(cc.clean(test))
