@@ -10,58 +10,18 @@ class KeyPredictor:
     A class for predicting key from a chord progression.
     """
 
-    def __init__(self, chord_txt: str):
+    def __init__(self, chord_txt: str, reference: pd.DataFrame):
         self.chord_txt = chord_txt
         self.chord_progression = self._chord_progression()
         self.n_chords = len(self.chord_progression)
         self.chord_counts = self._count_chords()
         self.chord_proportions = self._chord_proportions()
         self._integrity_proportions()
-        self._sort_chords()
-
-    def _chord_progression(self) -> list:
-        chord_lst = self.chord_txt.split(" ")
-        return [chord for chord in chord_lst if "/" not in chord]
-
-    def _count_chords(self) -> dict:
-        return dict(Counter(self.chord_progression))
-
-    def _chord_proportions(self) -> dict:
-        return {
-            chord: cnt / self.n_chords
-            for chord, cnt in self.chord_counts.items()
-        }
-
-    def _integrity_proportions(self):
-        sum_to_one = sum(self.chord_proportions.values())
-
-        if sum_to_one != approx(1.0):
-            raise ValueError(f"Proportions do not sum to 1, got {sum_to_one}")
-
-    def _sort_chords(self):
-        print(max())
-
-    def __str__(self):
-        return (
-            f"KeyPredictor:\n"
-            f"  Chord Progression: {self.chord_progression}\n"
-            f"  Chord Counts: {self.chord_counts}\n"
-            f"  Chord Proportions: {self.chord_proportions}"
-        )
-
-
-class KeyPredictor:
-    """
-    A class for predicting key from a chord progression.
-    """
-
-    def __init__(self, chord_txt: str):
-        self.chord_txt = chord_txt
-        self.chord_progression = self._chord_progression()
-        self.n_chords = len(self.chord_progression)
-        self.chord_counts = self._count_chords()
-        self.chord_proportions = self._chord_proportions()
-        self._integrity_proportions()
+        self.reference = reference
+        self.scores = self._calculate_scores()
+        self.top_scale = self.reference.loc[
+            self.scores.idxmax(), ["key", "mode"]
+        ]
 
     def _chord_progression(self) -> list:
         chord_lst = self.chord_txt.split(" ")
@@ -95,89 +55,37 @@ class KeyPredictor:
 
         return counts_unsorted[rotated_index]
 
+    def _calculate_scores(self) -> pd.Series:
+        """Vectorized calculation of scores for all scales in reference."""
+
+        # Creates a weight-matrix of all scales (rows) and all chords (cols)
+        weights_df = pd.DataFrame.from_records(self.reference["chord_weights"])
+
+        # Multiply the chord freqs (progression) with the weights of the references
+        scores = (weights_df.mul(self.chord_proportions, axis=1)).sum(axis=1)
+        ref = self.reference
+        ref["scores"] = scores.values
+        print(ref)
+        return scores
+
     def __str__(self):
-        df_summary = pd.DataFrame(
-            {
-                "Chord": self.chord_proportions.index,
-                "Count": self.chord_counts.values,
-                "Proportion": self.chord_proportions.values,
-            }
+        return (
+            f"Chord Progression:\n{self.chord_proportions}\n"
+            f"Best Matching Scale: {self.top_scale['key']} {self.top_scale['mode']}"
         )
 
-        df_summary.loc["Total"] = df_summary.sum(numeric_only=True)
 
-        return f"KeyPredictor:\n{df_summary}"
+progression = "Dm Dm A7 G7 Dm Dm A7 G7 Bm A G A Dm Dm A7 G7 Bm A G A Dm Dm A7 G7 Bm A G A Dm"
 
-
-# Testing
-
-test = "Gmaj G/B Cmaj Cmin Gmaj Bmin C/E Dmin Gmaj Bmin C/E Dmaj Cmaj Cmaj Dmaj Gmaj Emin Cmaj Dmaj Bmaj Gmaj Bmaj Gmaj Cmin Gmaj Emin Cmaj Dmaj"
-
-kp = KeyPredictor(test)
-
-progression = kp.chord_proportions
-
-
+# progression = "Cmaj Gmaj Am Fmaj Cmaj Fmaj Cmaj Fmaj Cmaj Gmaj Am Fmaj"
 reference = scales.get_ref_scales()
-# reference.to_csv("test.csv")
+kp = KeyPredictor(progression, reference)
 
-# TODO: Create function that can be applied all references
-d = reference["chord_weights"].iloc[7]
-
-out = []
-for chord, weight in progression.items():
-    if chord in d.keys():
-        scale_weight = d.get(chord)
-        res = scale_weight * weight
-    else:
-        res = 0
-    out.append(res)
-print(out)
-
-
+print(kp)
 exit()
+actual_key = f"{kp['key']} {kp['mode']}"
+print(f"actual_key : {actual_key}")
+expected_key = "C ionian"
+print(f"expected_key : {expected_key}")
 
-# Iterative solution with isin ----
-
-
-def match_to_scale(progression: pd.Series, ref_scale: set):
-    chords = progression.keys()
-    weights = progression.values
-
-    return chords.isin(ref_scale) * weights
-
-
-reference["match"] = reference["chords"].apply(
-    lambda scale: match_to_scale(progression, scale)
-)
-
-reference["score"] = reference["match"].apply(sum)
-
-print(reference)
-# reference["adj_match"] = reference["match"] * reference["weights"]
-# reference.to_csv("test.csv")
-exit()
-
-
-# LinAlg solution ----
-
-ref_chords = sorted(set(reference["chords"].explode()))
-
-progression_vector = [1 if chord in progression else 0 for chord in ref_chords]
-# print(f"progression_vector : {progression_vector}")
-
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
-
-scale_vector = kp.chord_proportions.values
-print(f"scale_vector : {scale_vector}")
-
-# Reshape vectors to 2D arrays for sklearn
-progression_array = np.array(progression_vector).reshape(1, -1)
-print(f"progression_array : {progression_array}")
-
-scale_array = np.array([scale_vector])  # Replace with all scale vectors
-print(f"scale_array : {scale_array}")
-
-similarity = cosine_similarity(progression_array, scale_array)
-print(f"similarity : {similarity}")
+print(actual_key == expected_key)
