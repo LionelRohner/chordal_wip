@@ -73,7 +73,7 @@ def test_filter_chords_no_valid_chords():
 
 
 # Apply all the above to Series
-def test_clean():
+def test_clean_1():
     # negative selection runs on a threshold of 3, which is inconvenient for manually written tests.
     cc = ChordCleaner(threshold=1)
     test = pd.Series(
@@ -97,4 +97,81 @@ def test_clean():
             "Gm Dm C C Gm Dm C C Gm Dm C C Gm A# C Gm A# C Gm A# C Gm A# C",
         ]
     )
+    assert actual.equals(expected), f"Expected {expected}, got {actual}"
+
+
+def test_clean_2():
+    # Bypass negative selection
+    cc = ChordCleaner(threshold=None)
+
+    test = pd.Series(
+        [
+            # Make sure these are not intrepreted as chords!
+            "B|--5/7---5-5-5---7--| G|-------------------| D|-------------------|",
+            # Use Amin instead of Am and Fmaj instead of F
+            "Am Am7/G Am/F# Am7/G Am Am7/G Am/F# Am7/G (Am - G) F G F F G AbÂº Am",
+            # Parenthesis and dash handling
+            "(Am - G - F - E) F G F G (Am - G) F G E7 Am G F E7 Am G F E7 Am G F ",
+            # C7M should be Cmaj7
+            "Inro C7M G Am Em C7M G D4 D C7M G Am Em C7M G D4 D C7M G Am Em C7M",
+        ]
+    )
+
+    actual = cc.clean(test)
+
+    expected = pd.Series(
+        [
+            "",
+            # Use Amin instead of Am and Fmaj instead of F. But Amin7/G should not be Amin7/Gmaj
+            "Amin Amin7/G Am/F# Am7/G Am Am7/G Am/F# Am7/G (Am - G) F G F F G AbÂº Am",
+            # Parenthesis and dash handling
+            "(Am - G - F - E) F G F G (Am - G) F G E7 Am G F E7 Am G F E7 Am G F ",
+            # C7M should be Cmaj7
+            "Inro C7M G Am Em C7M G D4 D C7M G Am Em C7M G D4 D C7M G Am Em C7M",
+        ]
+    )
+
+    assert actual.equals(expected), f"Expected {expected}, got {actual}"
+
+
+def test_clean_3():
+    cc = ChordCleaner(threshold=None)
+
+    test = pd.Series(
+        [
+            " B|---4-4-4----3-3-?-3s4--------------| G|----------------3?--??-------------|	 ",
+            "E|-----------------------------------| E|----------------------------------|		 ",
+            "B|---4-4-4----3-3-?-3---------------| G|----------------3?--??------------|	 ",
+            "D|-----------------3----------------| A|-3-3-3-3--1-1-1-----3-------------| ",
+            "E|----------------------------------| D# A# Cm Ab Cm Dm D# A# Cm Dm D# Dm D# ",
+            "	 		Intro: A# E A F hide this tab E B|-------------------5-5-5-5-5-5---------------|",
+            "A|---5-4-3-------------------------------------| E|------------5-4-3------------------4-3-0-----| D"
+            "D4 D B|--12-10v-| G B|------12--| C G/B D D4 D E|--10-10--| B|--10-10--| G C G/B E|--------10----10|"
+            "B|--10-10----10---| D D4 D B|-10-10-10----------13----13---12---11p10---------------------------------|",
+            "G|---------------------------------------------------13p12p10-12-----------| ",
+            "A# C D SOLO: B|--9s10-10-10-10-10--13b15--13b15--15r13---11---13---11-13b15-------| "
+            "E|-------------5--4--3------| E E E E E E A E|------5-3--2--0----| D D4 D G C G/B D D4",
+        ]
+    )
+
+    actual = cc.clean(test)
+
+    expected = pd.Series(
+        [
+            "",
+            "",
+            "",
+            "",
+            "D#maj A#maj Abmaj Cmin Dmin D#maj A#maj Cmin Dmin D#maj Dmin D#maj",
+            "A#maj Emaj Amaj Fmaj E",
+            "Dmaj",
+            "D4 Dmaj Gmaj Cmaj G/B Dmaj D4 Dmaj Gmaj Cmaj G/B",
+            "",
+            "",
+            "",
+            "A#maj Cmaj Dmaj",
+            "Emaj Emaj Emaj Emaj Emaj Emaj Amaj Dmaj D4 Dmaj Gmaj Cmaj G/B Dmaj D4",
+        ]
+    )
+
     assert actual.equals(expected), f"Expected {expected}, got {actual}"
