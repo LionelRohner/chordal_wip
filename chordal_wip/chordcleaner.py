@@ -140,9 +140,11 @@ class ChordCleaner:
         slash = rf"(?:\/{root}{accidental})?"
         chord_anatomy = rf"{root}{accidental}{quality}{extension}{modifier}{extension_2}{slash}"
 
-        # chord_anatomy = rf"(?<![A-Za-z])({chord_anatomy})(?![A-Za-z])"
+        # Make sure chords appear as standalone tokens and not embedded inside words
+        # Example: "Bridge" becomes "B"
+        true_chords = rf"(?<![A-Za-z])({chord_anatomy})(?![A-Za-z])"
 
-        chords = re.findall(chord_anatomy, txt)
+        chords = re.findall(true_chords, txt)
         return " ".join(chords)
 
     def clean(self, chord_series):
@@ -162,40 +164,4 @@ class ChordCleaner:
     def select(self, chord_series):
         chord_series = self._negative_selection(chord_series)
         chord_series = chord_series.apply(self._positive_selection)
-        # chord_series = chord_series.apply(self._rm_non_chords)
         return chord_series
-
-
-import pandas as pd
-
-
-cc = ChordCleaner(freq_threshold=None)
-test = pd.Series(
-    [
-        "A#maj7 A# A#maj7(b13) A Amaj6(9) C7sus4 Fb7sus4(b5,b13) A7(11,13) Xm7 PM7"
-    ]
-)
-
-test = str(test.iloc[0])
-test = "A  B (C - D - E)  F(9) (G) (X("
-
-actual = cc._rm_leading_parentheses(test)
-print(f"actual : {actual}")
-
-# test = "Hello I Am a chord"
-#
-# actual = cc._rm_non_chords(test).strip()
-# print(f"actual : {actual}")
-# expected = "Am"
-#
-#
-# exit()
-#
-# test = pd.Series(["C Bridge E", "Chorus and Bridge or chorus And bridge!"])
-#
-# cs_clean = cc.clean(test)
-# print(f"cs_clean : {cs_clean}")
-# cs_homo = cc.homogenize(cs_clean)
-# print(f"cs_homo : {cs_homo}")
-# cs_select = cc.select(cs_homo)
-# print(f"cs_select : {cs_select}")

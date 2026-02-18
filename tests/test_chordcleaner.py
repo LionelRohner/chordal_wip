@@ -152,8 +152,9 @@ def test_clean_wo_freq_threshold():
             "Inro C7M G Am Em C7M G D4 D",
             # Complex Chords and random words
             "Intro: F#m7 D2 F#m7 D4",
-            "|Bridge:D2,F,D2,F",
-            "Em Dmaj7(9) Bridge C/E",
+            "(D2,F,D2,F)",
+            "Em Dmaj7(9) C/E",
+            "Chorus chorus Bridge bridge Perospero pero",
             # "Em Emin Emin7 Em7 ",
             "Intro: Gm - Dm - C - C x2 C* Gm A# C* Gm",
         ]
@@ -175,6 +176,7 @@ def test_clean_wo_freq_threshold():
             "F#m7 D2 F#m7 D4",
             "D2 F D2 F",
             "Em Dmaj7(9) C/E",
+            "",
             # "Em Em Emin7 Em7 ",
             "Gm Dm C C C Gm A# C Gm",
         ]
