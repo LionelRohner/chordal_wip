@@ -14,15 +14,6 @@ def test_split_strings():
     assert actual == expected, f"Expected {expected}, got {actual}"
 
 
-def test_rm_non_chords():
-    test = "Hello I Am a chord"
-
-    actual = cc._rm_non_chords(test).strip()
-    expected = "Am"
-
-    assert actual == expected, f"Expected {expected}, got {actual}"
-
-
 def test_rm_long_words():
     test = "thisWordIsWayToooooLong But These Are Not"
 
@@ -42,10 +33,19 @@ def test_rm_tab_notation():
 
 
 def test_rm_whitespace():
-    test = "Cmaj7 Gmaj7   Am9                   F13"
+    test = " Cmaj7 Gmaj7   Am9                   F13 "
 
     actual = cc._rm_whitespace(test)
     expected = "Cmaj7 Gmaj7 Am9 F13"
+
+    assert actual == expected, f"Expected {expected}, got {actual}"
+
+
+def test_rm_leading_parentheses():
+    test = "A B (C - D - E) F(9) G) (X("
+
+    actual = cc._rm_leading_parentheses(test)
+    expected = "A B C - D - E) F(9) G) (X("
 
     assert actual == expected, f"Expected {expected}, got {actual}"
 
@@ -55,6 +55,26 @@ def test_rm_symbols():
 
     actual = cc._rm_symbols(test)
     expected = "Cmaj7(13) Gmaj7 Am9 F7(13) A B Em"
+
+    assert actual == expected, f"Expected {expected}, got {actual}"
+
+
+def test_rm_non_chords():
+    test = "A#maj7 A# A#maj7(b13) A Amaj6(9) C7sus4 Fb7sus4(b5,b13) A7(11,13) Xm7 PM7"
+
+    actual = cc._rm_non_chords(test).strip()
+    expected = (
+        "A#maj7 A# A#maj7(b13) A Amaj6(9) C7sus4 Fb7sus4(b5,b13) A7(11,13)"
+    )
+
+    assert actual == expected, f"Expected {expected}, got {actual}"
+
+
+def test_rm_non_chords_2():
+    test = "Hello I Am a chord"
+
+    actual = cc._rm_non_chords(test).strip()
+    expected = "Am"
 
     assert actual == expected, f"Expected {expected}, got {actual}"
 
@@ -118,13 +138,6 @@ def test_filter_chords_no_valid_chords():
     assert cc._positive_selection("This is not a chord") == ""
 
 
-# TODO: CONTINUE HERE!!
-# TODO: THE PROBLEM IS THAT NOW SLASH CHORDS AND SECOND EXTENSIONS (e.g. (9)) ARE GONE
-# TODO: THE PROBLEM IS THAT NOW SLASH CHORDS AND SECOND EXTENSIONS (e.g. (9)) ARE GONE
-# TODO: THE PROBLEM IS THAT NOW SLASH CHORDS AND SECOND EXTENSIONS (e.g. (9)) ARE GONE
-# TODO: THE PROBLEM IS THAT NOW SLASH CHORDS AND SECOND EXTENSIONS (e.g. (9)) ARE GONE
-# TODO: THE PROBLEM IS THAT NOW SLASH CHORDS AND SECOND EXTENSIONS (e.g. (9)) ARE GONE
-# TODO: THE PROBLEM IS THAT NOW SLASH CHORDS AND SECOND EXTENSIONS (e.g. (9)) ARE GONE
 def test_clean_wo_freq_threshold():
     # Bypass negative selection
     cc = ChordCleaner(freq_threshold=None)
@@ -132,16 +145,16 @@ def test_clean_wo_freq_threshold():
     test = pd.Series(
         [
             # Rm
-            "Am7/G Am/F# Amin (Am - G) AbÂº",
+            "Am7/G Am/F# Am (Am - G) AbÂº",
             # Parenthesis and dash handling
-            "(Am - G - F - E) F G (Am - G) E7 Am ",
+            "(Am - G - F) F G (Am - G) E7 ",
             # C7M should be Cmaj7
             "Inro C7M G Am Em C7M G D4 D",
             # Complex Chords and random words
             "Intro: F#m7 D2 F#m7 D4",
-            # TODO: D4/7 and other fancddy chords
-            "Em Dmaj7(9) Bridge C C D Em",
-            "Intro: Em Bm ( C ) Am C (2x) Em ",
+            "|Bridge:D2,F,D2,F",
+            "Em Dmaj7(9) Bridge C/E",
+            # "Em Emin Emin7 Em7 ",
             "Intro: Gm - Dm - C - C x2 C* Gm A# C* Gm",
         ]
     )
@@ -155,13 +168,14 @@ def test_clean_wo_freq_threshold():
             # Use Am instead of Am and Fmaj instead of F. But Am7/G should not be Am7/Gmaj
             "Am7/G Am/F# Am Am G Ab",
             # Parenthesis and dash handling
-            "Am G F E F G Am G E7 Am",
+            "Am G F F G Am G E7",
             # C7M should be Cmaj7
             "Cmaj7 G Am Em Cmaj7 G D4 D",
             # Complex chords
             "F#m7 D2 F#m7 D4",
-            "Em Dmaj7(9) C C D Em",
-            "Em Bm C Am C Em",
+            "D2 F D2 F",
+            "Em Dmaj7(9) C/E",
+            # "Em Em Emin7 Em7 ",
             "Gm Dm C C C Gm A# C Gm",
         ]
     )

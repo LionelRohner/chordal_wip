@@ -17,10 +17,6 @@ class ChordCleaner:
         return re.sub(split_comma_pattern, " ", txt)
 
     # Clean up ----
-    # TODO: Should this be applied at the end?
-    def _rm_non_chords(self, txt):
-        non_chord_pattern = r"\b(?![A-G])\S*\b"
-        return re.sub(non_chord_pattern, "", txt)
 
     def _rm_long_words(self, txt):
         long_word_pattern = rf"\b\S{{{self.char_threshold},}}\b"
@@ -33,13 +29,23 @@ class ChordCleaner:
         return re.sub(tab_pattern, "", txt)
 
     def _rm_whitespace(self, txt):
-        """Remove excess whitespaces, i.e. n>1."""
+        """Remove leading, trailing and excess whitespaces, i.e. n>1."""
         txt = re.sub(r"\s+", " ", txt)
         return txt.strip()
+
+    def _rm_leading_parentheses(self, txt):
+        """Remove leading parenthesis to break up enclosures like (C - G)"""
+        leading_parenthesis_pattern = r"(?<!\S)\((?=[A-G])"
+        return re.sub(leading_parenthesis_pattern, "", txt)
 
     def _rm_symbols(self, txt):
         """Replace multiple whitespace characters with a single space."""
         return re.sub(r"(\[|\]|\{|\}|\*|\|)", "", txt)
+
+    # TODO: Should this be applied at the end?
+    def _rm_non_chords(self, txt):
+        non_chord_pattern = r"(?<!\S)(?![A-G])\S+"  # Use custom word boundary
+        return re.sub(non_chord_pattern, "", txt)
 
     # Homogenization ----
     def _homogenize_qualities(self, txt):
@@ -61,11 +67,11 @@ class ChordCleaner:
         txt = re.sub(r"([0-9])(-)(?![0-9])", r"\1b", txt)
         # Remove no3 and no5 qaulities
         txt = re.sub(r"\(?no[357]{1}\)?", "", txt)
+        # Convert minor triads from "Cmin" to "Cm"
+        txt = re.sub(r"([A-G][#b]?)min\b", r"\1m", txt)
 
         # TODO:
         # What about those? F#7(b9/b13)
-        # Convert minor chords from "Cm" to "Cmin"
-        # txt = re.sub(r"([A-G][#b]?)m\b", r"\1min", txt)
         # Convert major chords from "C" to "Cmaj" when not followed by other chord symbols
         # txt = re.sub(r"\b([A-G][#b]?)(?![0-9a-zA-Z])", r"\1maj", txt)
 
@@ -141,9 +147,11 @@ class ChordCleaner:
 
     def clean(self, chord_series):
         chord_series = chord_series.apply(self._split_strings)
+        chord_series = chord_series.apply(self._rm_leading_parentheses)
         chord_series = chord_series.apply(self._rm_long_words)
         chord_series = chord_series.apply(self._rm_tab_notation)
         chord_series = chord_series.apply(self._rm_non_chords)
+        # TODO: needed? chord_series = chord_series.apply(self._rm_symbols)
         return chord_series
 
     def homogenize(self, chord_series):
@@ -154,17 +162,24 @@ class ChordCleaner:
     def select(self, chord_series):
         chord_series = self._negative_selection(chord_series)
         chord_series = chord_series.apply(self._positive_selection)
+        # chord_series = chord_series.apply(self._rm_non_chords)
         return chord_series
 
 
-# import pandas as pd
+import pandas as pd
 
 
 cc = ChordCleaner(freq_threshold=None)
-test = (
-    "A#maj7 A# A#maj7(b13) A Amaj6(9) C7sus4 Fb7sus4(b5,b13) A7(11,13) Xm7 PM7"
+test = pd.Series(
+    [
+        "A#maj7 A# A#maj7(b13) A Amaj6(9) C7sus4 Fb7sus4(b5,b13) A7(11,13) Xm7 PM7"
+    ]
 )
-actual = cc._positive_selection(test)
+
+test = str(test.iloc[0])
+test = "A  B (C - D - E)  F(9) (G) (X("
+
+actual = cc._rm_leading_parentheses(test)
 print(f"actual : {actual}")
 
 # test = "Hello I Am a chord"
