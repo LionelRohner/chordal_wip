@@ -32,6 +32,15 @@ def test_rm_tab_notation():
     assert actual == expected, f"Expected {expected}, got {actual}"
 
 
+def test_rm_tab_notation_2():
+    test = "A||---5-4-3-------------------| E||-------5-4-3------------4-3-0-----| D Fmaj7(9)"
+
+    actual = cc._rm_tab_notation(test)
+    expected = "D Fmaj7(9)"
+
+    assert actual == expected, f"Expected {expected}, got {actual}"
+
+
 def test_rm_whitespace():
     test = " Cmaj7 Gmaj7   Am9                   F13 "
 
