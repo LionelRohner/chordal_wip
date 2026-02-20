@@ -166,3 +166,79 @@ class ChordCleaner:
         chord_series = self._negative_selection(chord_series)
         chord_series = chord_series.apply(self._positive_selection)
         return chord_series
+
+
+class ChordCleanerToken:
+    """
+    A class for cleaning and standardizing chord notations in text data.
+    """
+
+    def __init__(self, char_threshold=0):
+        self.char_threshold = char_threshold
+        self._chord_cache = set()
+
+    # Tokenize ----
+    def _tokenize(self, txt):
+        """Split by coma and rm leading, trailing, and excess whitespaces, i.e. n > 1"""
+        split_symbol_pattern = r"(?<=\S)[,^%]{1}(?=\S)"
+        txt = re.sub(split_symbol_pattern, " ", txt)
+        txt = re.sub(r"\s+", " ", txt)
+        txt = txt.strip()
+        return txt.split(" ")
+
+    # Process list of tokens ----
+
+    def _process_tokens(self, tokens):
+        chords = []
+
+        for token in tokens:
+            token = self._erode(token)
+
+            if not token:
+                continue
+
+            if token in self._chord_cache:
+                chords.append(token)
+
+            if self._select(token):
+                continue
+
+            # if self._validate(token):
+            print(token)
+            chords.append(token)
+            self._chord_cache.add(token)
+
+        return chords
+
+    # Cleaning functions ----
+    def _erode(self, token):
+        # Or use regex? ^[^A-G]+
+
+        for i, c in enumerate(token):
+            if c in "ABCDEFG":
+                return token[i:]
+        return ""
+
+    def _select(self, token):
+        if len(token) >= self.char_threshold:
+            return False
+
+        if re.match(r"^[A-G]{1}[#b]?[-|:\s]{1,2}", token):
+            return False
+
+        return True
+
+    def _validate(self, token):
+        return True
+
+    def clean(self, txt):
+        tokens = self._tokenize(txt)
+        return self._process_tokens(tokens)
+
+
+cc = ChordCleanerToken()
+
+test = "XX Amin7(9) E:---- ((Cmaj"
+
+actual = cc.clean(test)
+print(f"actual : {actual}")
