@@ -19,13 +19,14 @@ class ChordCleaner:
     # Clean up ----
 
     def _rm_long_words(self, txt):
-        long_word_pattern = rf"\b\S{{{self.char_threshold},}}\b"
+        long_word_pattern = rf"\S{{{self.char_threshold},}}"
         return re.sub(long_word_pattern, "", txt)
 
     def _rm_tab_notation(self, txt):
         """Remove tablature notation from the text."""
         # This pattern looks for sequences with many dashes and numbers
-        tab_pattern = r"\b[A-G]#?b?\|[-0-9hpsbrv?\/]+[\| ]+"
+        # tab_pattern = r"\b[A-G]#?b?\|{1,2}[-0-9hpsbrv?\/]+[\| ]+"
+        tab_pattern = r"\b[A-G]#?b?\|{1,2}[-0-9hpsbrv?\/]+[\| ]+"
         return re.sub(tab_pattern, "", txt)
 
     def _rm_whitespace(self, txt):
@@ -40,9 +41,8 @@ class ChordCleaner:
 
     def _rm_symbols(self, txt):
         """Replace multiple whitespace characters with a single space."""
-        return re.sub(r"(\[|\]|\{|\}|\*|\|)", "", txt)
+        return re.sub(r"(\[|\]|\{|\}|\*|\||~)", "", txt)
 
-    # TODO: Should this be applied at the end?
     def _rm_non_chords(self, txt):
         non_chord_pattern = r"(?<!\S)(?![A-G])\S+"  # Use custom word boundary
         return re.sub(non_chord_pattern, "", txt)
@@ -153,6 +153,7 @@ class ChordCleaner:
         chord_series = chord_series.apply(self._rm_long_words)
         chord_series = chord_series.apply(self._rm_tab_notation)
         chord_series = chord_series.apply(self._rm_non_chords)
+        chord_series = chord_series.apply(self._rm_whitespace)
         # TODO: needed? chord_series = chord_series.apply(self._rm_symbols)
         return chord_series
 
