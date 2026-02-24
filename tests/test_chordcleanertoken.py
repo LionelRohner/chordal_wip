@@ -58,9 +58,9 @@ def test_select_pos():
 
 
 def test_():
-    test = "XX Amin7(9) E:---- ((Cmaj"
+    test = "empty Bridge: C° C%& Amin7(9), C* E:---- ((Cmaj Cmaj C%&"
 
-    actual = cc.clean(test)
-    expected = "Amin7(9) Cmaj"
+    actual = cc.raw_chord_detection(test)
+    expected = "Cdim C Amin7(9) C C C"
 
     assert actual == expected, f"Expected {expected}, got {actual}"

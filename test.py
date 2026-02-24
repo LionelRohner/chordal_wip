@@ -1,9 +1,9 @@
 from datasets import load_dataset
 import pandas as pd
 import re
-from chordal_wip.chordcleaner_old import ChordCleaner
+from chordal_wip.chordcleaner import ChordCleaner
 
-cc = ChordCleaner(threshold=3)
+cc = ChordCleaner(freq_threshold=3)
 
 ds = load_dataset("lluccardoner/melodyGPT-song-chords-text-1")
 
@@ -18,10 +18,13 @@ series = ds["chords_str"]
 
 ds["chords_str_clean"] = cc.clean(series)
 
+# ds.iloc[8888:9888].to_csv("test.csv")
+# exit()
 
-unique_words = ds["chords_str"].str.split().explode().drop_duplicates()
+# TODO: Move into ChordCleaner
+unique_words = ds["chords_str_clean"].str.split().explode().drop_duplicates()
 word_length_df = unique_words.reset_index(drop=True).to_frame()
-word_length_df["length"] = word_length_df["chords_str"].str.len()
+word_length_df["length"] = word_length_df["chords_str_clean"].str.len()
 word_length_df.to_csv("test_cnt_len.csv")
 exit()
 cnts = ds["chords_str_clean"].str.split().explode().value_counts()
