@@ -173,9 +173,9 @@ class ChordCleanerToken:
     A class for cleaning and standardizing chord notations in text data.
     """
 
-    def __init__(self, char_threshold=0):
+    def __init__(self, char_threshold=20):
         self.char_threshold = char_threshold
-        self._chord_cache = set()
+        self._cached_tokens = {}
 
     # Tokenize ----
     def _tokenize(self, txt):
@@ -195,23 +195,42 @@ class ChordCleanerToken:
             token = self._erode(token)
 
             if not token:
+                print("Empty token")
                 continue
 
-            if token in self._chord_cache:
+            token = self._homogenize(token)
+
+            cached = self._cached_tokens.get(token)
+
+            if cached is not None:
+                print(f"{token} already in cache!")
+                if cached:
+                    chords.append(token)
+                    continue
+                else:
+                    # Since token is junk, skip validation!
+                    continue
+
+            if self._reject(token):
+                print(f"{token} rejected!")
+                continue
+
+            if self._validate(token):
+                print(f"{token} validated and cached!")
+                self._cached_tokens[token] = True
                 chords.append(token)
-
-            if self._select(token):
-                continue
-
-            # if self._validate(token):
-            print(token)
-            chords.append(token)
-            self._chord_cache.add(token)
+            else:
+                print(f"{token} added to cache as junk")
+                self._cached_tokens[token] = False
 
         return chords
 
     # Cleaning functions ----
     def _erode(self, token):
+        """
+        Strips leading non-note characters from a token.
+        Returns the substring starting with the first valid note (A-G) or an empty string if none is found.
+        """
         # Or use regex? ^[^A-G]+
 
         for i, c in enumerate(token):
@@ -219,26 +238,85 @@ class ChordCleanerToken:
                 return token[i:]
         return ""
 
-    def _select(self, token):
+    def _homogenize(self, token):
+        # Convert Unicode to ASCII
+        token = token.replace("♭", "b")
+        token = token.replace("♯", "#")
+        token = token.replace("°", "dim")
+        token = token.replace("–", "-")
+
+        # Strip trailing symbol leftovers
+        token = token.rstrip("*~,/")
+
+        return token
+
+    def _reject(self, token):
+        """Predicate that rejects tokens that are too long or resemble tabs"""
         if len(token) >= self.char_threshold:
-            return False
+            print(f"{token} too long")
+            return True
 
         if re.match(r"^[A-G]{1}[#b]?[-|:\s]{1,2}", token):
-            return False
+            print(f"{token} is a tab!")
 
-        return True
+            return True
+
+        return False
 
     def _validate(self, token):
-        return True
+        root = "[A-G]{1}"
+        accidental = "[#b]?"
+        quality = r"(?:maj|min|dim|aug|sus|add|m|M)?"
+        extension = r"(?:2|4|5|6|7|9|10|11|13)?"
+        modifier = r"(?:[ADGIMNOSUadgimnosu]{0,3}[24]?)?"
+        extension_2 = rf"(?:\((?:{accidental}{extension},?\s*){{1,2}}\))?"
+        slash = rf"(?:\/{root}{accidental})?"
+        chord_anatomy = rf"^{root}{accidental}{quality}{extension}{modifier}{extension_2}{slash}$"
+        # print(chord_anatomy)
+        return re.match(chord_anatomy, token)
 
-    def clean(self, txt):
+    def raw_chord_isolation(self, txt):
+        """
+        Stage 1 - Lenient chord detection
+        Tokenization, minimal normalization and rough selection of tokens based on chord structure."""
         tokens = self._tokenize(txt)
-        return self._process_tokens(tokens)
+        return self._process_tokens(tokens).join(" ")
+
+    def chord_canonization(self, txt):
+        """
+        Stage 2 - Aggressive standardization and selection
+        """
+        pass
+
+
+to_test = """
+Amin
+Amaj7(13)
+Asus2dim
+
+
+A(add9)/E
+F7(9)(13)
+F#7(4)(9)
+F7(9)(5b)
+Em7sus4/B
+Fmaj7add2
+Emmaj7/Eb
+Fmaj7/11+
+C7+/9/11+
+G7/13(b9)
+Eb°/(b13)
+Eb7(9/5-)
+D#m7(5b)
+C#madd11
+G#7M(5+)
+D♭m
+"""
 
 
 cc = ChordCleanerToken()
 
-test = "XX Amin7(9) E:---- ((Cmaj"
+test = "empty Bridge: C° C%& Amin7(9), C* E:---- ((Cmaj Cmaj C%&"
 
 actual = cc.clean(test)
 print(f"actual : {actual}")
