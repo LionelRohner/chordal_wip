@@ -309,8 +309,38 @@ class ChordIsolator:
         return self._chord_regex.match(token)
 
 
-    def chord_canonization(self, txt):
-        """
-        Stage 2 - Aggressive standardization and selection
-        """
+class ChordCanonizer:
+    """
+    Aggressive standardization and selection
+    """
+
+    EMPTY_CHORD = {
+        "root": None,
+        "quality": None,
+        "extensions": [],
+        "adds": [],
+        "sus": None,
+        "alterations": [],
+        "slash": None,
+    }
+
+    def __init__(self):
+        self._cached_tokens = {}
+
+    # Public Method ----
+    def canonicalize(self, txt: str):
+        chords = txt.split(" ")
+
+        for chord in chords:
+            raw_decomposed_chord = self._parse(chord)
+            norm_decomposed_chord = self._normalize(chord)
+
+    # Private Methods ----
+    def _parse(self, chord: str) -> dict:
+        pass
+
+    def _normalize(self, decomp_chord: dict) -> dict:
+        pass
+
+    def _reconstruct(self, decomp_chord: dict) -> str:
         pass
