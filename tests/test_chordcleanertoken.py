@@ -1,7 +1,7 @@
-from chordal_wip.chordcleaner import ChordCleanerToken
+from chordal_wip.chordcleaner import ChordIsolator
 from re import sub
 
-cc = ChordCleanerToken(char_threshold=10)
+cc = ChordIsolator(char_threshold=10)
 
 
 def test_tokenize():
