@@ -176,6 +176,32 @@ class ChordCleanerToken:
     def __init__(self, char_threshold=20):
         self.char_threshold = char_threshold
         self._cached_tokens = {}
+        self._chord_regex = self._init_chord_regex()
+
+    # Internal data
+    def _init_chord_regex(self):
+        # Chord root
+        root = "[A-G]{1}"
+        accidental = "[#b]?"
+        root_note = rf"{root}{accidental}"
+
+        # Chord modifiers
+        brackets = r"(?:\([^\)]*\))"  # match brackets with anything in it
+        qualities = r"(?:maj|min|dim|aug|sus|add|m|M)"
+        extensions = r"(?:2|4|5|6|7|9|10|11|13)"
+        alterations = r"(?:[+#-])"
+
+        # Slash Logic
+        # Either root (Cm7/G) OR some random chord modifier (Cm7/b5)
+        slash_content = rf"/(?:{root_note}|{accidental}?{extensions}|{qualities}|{alterations})+"
+
+        # Cluster
+        cluster = rf"(?:{qualities}|{extensions}|{alterations}|{brackets}|{slash_content})*"
+
+        # Combine
+        chord_anatomy = rf"^{root_note}{cluster}$"
+
+        return re.compile(chord_anatomy, re.VERBOSE)
 
     # Tokenize ----
     def _tokenize(self, txt):
@@ -264,59 +290,21 @@ class ChordCleanerToken:
         return False
 
     def _validate(self, token):
-        root = "[A-G]{1}"
-        accidental = "[#b]?"
-        quality = r"(?:maj|min|dim|aug|sus|add|m|M)?"
-        extension = r"(?:2|4|5|6|7|9|10|11|13)?"
-        modifier = r"(?:[ADGIMNOSUadgimnosu]{0,3}[24]?)?"
-        extension_2 = rf"(?:\((?:{accidental}{extension},?\s*){{1,2}}\))?"
-        slash = rf"(?:\/{root}{accidental})?"
-        chord_anatomy = rf"^{root}{accidental}{quality}{extension}{modifier}{extension_2}{slash}$"
-        # print(chord_anatomy)
-        return re.match(chord_anatomy, token)
+        """
+        Validate whether the tokens follow an approximate chord structure
+        """
+        return self._chord_regex.match(token)
 
     def raw_chord_isolation(self, txt):
         """
         Stage 1 - Lenient chord detection
         Tokenization, minimal normalization and rough selection of tokens based on chord structure."""
         tokens = self._tokenize(txt)
-        return self._process_tokens(tokens).join(" ")
+        tokens_list = self._process_tokens(tokens)
+        return " ".join(tokens_list)
 
     def chord_canonization(self, txt):
         """
         Stage 2 - Aggressive standardization and selection
         """
         pass
-
-
-to_test = """
-Amin
-Amaj7(13)
-Asus2dim
-
-
-A(add9)/E
-F7(9)(13)
-F#7(4)(9)
-F7(9)(5b)
-Em7sus4/B
-Fmaj7add2
-Emmaj7/Eb
-Fmaj7/11+
-C7+/9/11+
-G7/13(b9)
-Eb°/(b13)
-Eb7(9/5-)
-D#m7(5b)
-C#madd11
-G#7M(5+)
-D♭m
-"""
-
-
-cc = ChordCleanerToken()
-
-test = "empty Bridge: C° C%& Amin7(9), C* E:---- ((Cmaj Cmaj C%&"
-
-actual = cc.clean(test)
-print(f"actual : {actual}")
