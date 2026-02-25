@@ -178,7 +178,7 @@ class ChordCleanerToken:
         self._cached_tokens = {}
         self._chord_regex = self._init_chord_regex()
 
-    # Internal data
+    # Internal instance ----
     def _init_chord_regex(self):
         # Chord root
         root = "[A-G]{1}"
@@ -198,13 +198,13 @@ class ChordCleanerToken:
         # Cluster
         cluster = rf"(?:{qualities}|{extensions}|{alterations}|{brackets}|{slash_content})*"
 
-        # Combine
+        # Full chord pattern
         chord_anatomy = rf"^{root_note}{cluster}$"
 
         return re.compile(chord_anatomy, re.VERBOSE)
 
     # Tokenize ----
-    def _tokenize(self, txt):
+    def _tokenize(self, txt: str):
         """Split by coma and rm leading, trailing, and excess whitespaces, i.e. n > 1"""
         split_symbol_pattern = r"(?<=\S)[,^%]{1}(?=\S)"
         txt = re.sub(split_symbol_pattern, " ", txt)
@@ -214,7 +214,7 @@ class ChordCleanerToken:
 
     # Process list of tokens ----
 
-    def _process_tokens(self, tokens):
+    def _process_tokens(self, tokens: str):
         chords = []
 
         for token in tokens:
@@ -252,7 +252,7 @@ class ChordCleanerToken:
         return chords
 
     # Cleaning functions ----
-    def _erode(self, token):
+    def _erode(self, token: str):
         """
         Strips leading non-note characters from a token.
         Returns the substring starting with the first valid note (A-G) or an empty string if none is found.
@@ -264,7 +264,7 @@ class ChordCleanerToken:
                 return token[i:]
         return ""
 
-    def _homogenize(self, token):
+    def _homogenize(self, token: str):
         # Convert Unicode to ASCII
         token = token.replace("♭", "b")
         token = token.replace("♯", "#")
@@ -276,7 +276,7 @@ class ChordCleanerToken:
 
         return token
 
-    def _reject(self, token):
+    def _reject(self, token: str):
         """Predicate that rejects tokens that are too long or resemble tabs"""
         if len(token) >= self.char_threshold:
             print(f"{token} too long")
@@ -289,13 +289,13 @@ class ChordCleanerToken:
 
         return False
 
-    def _validate(self, token):
+    def _validate(self, token: str):
         """
         Validate whether the tokens follow an approximate chord structure
         """
         return self._chord_regex.match(token)
 
-    def raw_chord_isolation(self, txt):
+    def raw_chord_isolation(self, txt: str):
         """
         Stage 1 - Lenient chord detection
         Tokenization, minimal normalization and rough selection of tokens based on chord structure."""
