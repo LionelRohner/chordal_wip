@@ -1,4 +1,5 @@
 from chordal_wip.chordcleaner import ChordCleanerToken
+from re import sub
 
 cc = ChordCleanerToken(char_threshold=10)
 
@@ -30,37 +31,120 @@ def test_erode_neg():
     assert actual == expected, f"Expected {expected}, got {actual}"
 
 
-def test_select_long():
+def test_reject_long():
     test = "this-is-longer-than-limit"
 
-    actual = cc._select(test)
-    expected = False
-
-    assert actual == expected, f"Expected {expected}, got {actual}"
-
-
-def test_select_tab():
-    test = "A|-3-2-0---x------|"
-
-    actual = cc._select(test)
-    expected = False
-
-    assert actual == expected, f"Expected {expected}, got {actual}"
-
-
-def test_select_pos():
-    test = "Amin7(9)"
-
-    actual = cc._select(test)
+    actual = cc._reject(test)
     expected = True
 
     assert actual == expected, f"Expected {expected}, got {actual}"
 
 
-def test_():
-    test = "empty Bridge: C° C%& Amin7(9), C* E:---- ((Cmaj Cmaj C%&"
+def test_reject_tab():
+    test = "A|-3-2-0---x------|"
 
-    actual = cc.raw_chord_detection(test)
-    expected = "Cdim C Amin7(9) C C C"
+    actual = cc._reject(test)
+    expected = True
+
+    assert actual == expected, f"Expected {expected}, got {actual}"
+
+
+def test_not_reject():
+    test = "Amin7(9)"
+
+    actual = cc._reject(test)
+    expected = False
+
+    assert actual == expected, f"Expected {expected}, got {actual}"
+
+
+def test_raw_chord_isolation():
+    test = """
+    #notchords
+    Chorus
+    Bridge
+    #chords
+    Amin
+    Amaj7(13)
+    Asus2dim
+    A(add9)/E
+    F7(9)(13)
+    F#7(4)(9)
+    F7(9)(5b)
+    Em7sus4/B
+    Fmaj7add2
+    Emmaj7/Eb
+    Fmaj7/11+
+    C7+/9/11+
+    G7/13(b9)
+    Eb7(9/5-)
+    D#m7(5b)
+    C#madd11
+    G#7M(5+)
+    Cm7/b5/Bb
+    D7/sus4/G
+    F#m7/4(9)
+    B7/9(#11)
+    B7(b5/b9)
+    G#madd13
+    Bsus4/D#
+    Ebmaj7/G
+    Asus2/F#
+    Gm7
+    D(4)
+    Csus
+    Gm11
+    C#7+
+    Dbm6
+    Gbm9
+    Cm5+
+    G5/F
+    E13-
+    Eb/9
+    """
+
+    actual = cc.raw_chord_isolation(test)
+    expected = """
+    Amin
+    Amaj7(13)
+    Asus2dim
+    A(add9)/E
+    F7(9)(13)
+    F#7(4)(9)
+    F7(9)(5b)
+    Em7sus4/B
+    Fmaj7add2
+    Emmaj7/Eb
+    Fmaj7/11+
+    C7+/9/11+
+    G7/13(b9)
+    Eb7(9/5-)
+    D#m7(5b)
+    C#madd11
+    G#7M(5+)
+    Cm7/b5/Bb
+    D7/sus4/G
+    F#m7/4(9)
+    B7/9(#11)
+    B7(b5/b9)
+    G#madd13
+    Bsus4/D#
+    Ebmaj7/G
+    Asus2/F#
+    Gm7
+    D(4)
+    Csus
+    Gm11
+    C#7+
+    Dbm6
+    Gbm9
+    Cm5+
+    G5/F
+    E13-
+    Eb/9
+    """
+
+    expected = expected.replace("\n", " ").strip()
+    expected = sub(r"\s+", " ", expected)
 
     assert actual == expected, f"Expected {expected}, got {actual}"
