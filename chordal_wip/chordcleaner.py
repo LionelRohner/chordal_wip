@@ -315,6 +315,7 @@ class ChordCanonizer:
     """
 
     EMPTY_CHORD = {
+        "raw_chord": None,  # TODO: RM >> Debug
         "root": None,
         "quality": None,
         "extensions": [],
@@ -322,7 +323,44 @@ class ChordCanonizer:
         "sus": None,
         "alterations": [],
         "slash": None,
+        "UNCLEAR": [],
     }
+
+    # Pattern recognition ----
+    ROOT_REGEX = re.compile(r"[A-G](?:#|b)?")
+    SPLIT_REGEX = re.compile(
+        r"""
+        \([^)]*\)
+        |sus\d*
+        |add\d+
+        |maj7
+        |dim
+        |aug
+        |m
+        |[#b]?\d+
+        |[#b]\d+
+    """,
+        re.VERBOSE,
+    )
+
+    ALLOWED_QUALITIES = {
+        "min": "m",
+        "m": "m",
+        "-": "m",
+        "maj": "",
+        "M": "maj7",
+        "maj7": "maj7",
+        "7M": "maj7",
+        "M7": "maj7",
+        "dim": "dim",
+        "aug": "aug",
+        "sus": "sus4",
+        "sus4": "sus4",
+        "sus2": "sus2",
+    }
+
+    # TODO: needs accidentals at the end as well?
+    EXTENSIONS_REGEX = re.compile(r"[#b]?(?:2|4|5|6|7|9|11|13){1}")
 
     def __init__(self):
         self._cached_tokens = {}
@@ -333,14 +371,97 @@ class ChordCanonizer:
 
         for chord in chords:
             raw_decomposed_chord = self._parse(chord)
-            norm_decomposed_chord = self._normalize(chord)
+
+            norm_decomposed_chord = self._normalize(raw_decomposed_chord)
+
+            # return self._reconstruct(norm_decomposed_chord)
+
+            pass
 
     # Private Methods ----
     def _parse(self, chord: str) -> dict:
-        pass
+        decomp_chord = {
+            "raw_chord": None,  # TODO: RM >> Debug
+            "root": None,
+            "quality": None,
+            "extensions": [],
+            "adds": [],
+            "sus": None,
+            "alterations": [],
+            "slash": None,
+            "UNCLEAR": [],
+        }
+        # decomp_chord = self.EMPTY_CHORD
+
+        decomp_chord["raw_chord"] = chord
+
+        chord = chord.replace("(", "").replace(")", "")
+
+        # Slash handling
+        if "/" in chord:
+            parts = chord.split("/")
+
+            chord = parts[0]
+
+            slash_bass_candidate = parts[-1]
+
+            if self.ROOT_REGEX.match(slash_bass_candidate):
+                decomp_chord["slash"] = slash_bass_candidate
+            else:
+                decomp_chord["adds"].append(slash_bass_candidate)
+
+        # Root handling
+        root_capture = self.ROOT_REGEX.match(chord)
+
+        if not root_capture:
+            decomp_chord["root"] = "X"
+            return decomp_chord
+
+        root = root_capture.group(0)
+        decomp_chord["root"] = root
+
+        # Modifier handling
+        remainder = chord[len(root) :]
+
+        tokens = self.SPLIT_REGEX.findall(remainder)
+        # TODO: Should numbers be tokenized individually? E.g. Aadd9(13) becomes "A", "add913", instead of "A", "add9", "13"
+        print(f"tokens : {tokens}")
+
+        for token in tokens:
+            token = token.strip()
+
+            if token.startswith("add"):
+                decomp_chord["adds"].append(token)
+
+            elif token.startswith("sus"):
+                decomp_chord["sus"] = token
+
+            elif token in self.ALLOWED_QUALITIES:
+                decomp_chord["quality"] = self.ALLOWED_QUALITIES[token]
+
+            elif self.EXTENSIONS_REGEX.match(token):
+                print(f"extensions match: {token}")
+                print(
+                    f"only 2,4,5,6,7,9,11,13 are allowed no compounded, e.g. 7913"
+                )
+                decomp_chord["extensions"].append(token)
+
+            else:
+                decomp_chord["UNCLEAR"].append(token)
+
+        return decomp_chord
 
     def _normalize(self, decomp_chord: dict) -> dict:
         pass
 
     def _reconstruct(self, decomp_chord: dict) -> str:
         pass
+
+
+test = "Amaj7add9(13) E7(9)(13) Asus2dim A(add9)/E".split(" ")
+
+cc = ChordCanonizer()
+
+for c in test:
+    print(c)
+    print(cc._parse(c))
