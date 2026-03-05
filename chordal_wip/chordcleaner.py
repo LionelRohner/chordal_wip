@@ -335,12 +335,11 @@ class ChordCanonizer:
         \([^)]*\)
         |sus\d*
         |add\d+
-        |maj7
+        |maj7|maj|7M|M7
         |dim
         |aug
-        |m
-        |[#b]?\d+
-        |[#b]\d+
+        |m|min
+        |[#b]?(?:2|4|5|6|7|9|11|13)
     """,
         re.VERBOSE,
     )
@@ -350,6 +349,7 @@ class ChordCanonizer:
         "m": "m",
         "-": "m",
         "maj": "",
+        "Maj": "",
         "M": "maj7",
         "maj7": "maj7",
         "7M": "maj7",
@@ -365,25 +365,37 @@ class ChordCanonizer:
     EXTENSIONS_REGEX = re.compile(r"[#b]?(?:2|4|5|6|7|9|11|13){1}")
 
     def __init__(self):
-        self._cached_tokens = {}
+        self._cached_chords = {}
 
     # Public Method ----
     def canonicalize(self, txt: str):
         chords = txt.split(" ")
+        chords_cleaned = []
 
         for chord in chords:
+            if chord in self._cached_chords:
+                if self._cached_chords[chord]:
+                    chords_cleaned.append(chord)
+
+            # Canonization
             raw_decomposed_chord = self._parse(chord)
-
             norm_decomposed_chord = self._normalize(raw_decomposed_chord)
+            chord_cleaned = self._reconstruct(norm_decomposed_chord)
 
-            # return self._reconstruct(norm_decomposed_chord)
+            if not chord_cleaned:
+                self._cached_chords[chord] = False
+                continue
+            else:
+                self._cached_chords[chord_cleaned] = True
 
-            pass
+            chords_cleaned.append(chord_cleaned)
+
+        print(self._cached_chords)
+        return chords_cleaned
 
     # Private Methods ----
     def _parse(self, chord: str) -> dict:
         decomp_chord = {
-            "raw_chord": None,  # TODO: RM >> Debug
             "root": None,
             "quality": None,
             "extensions": [],
@@ -391,10 +403,10 @@ class ChordCanonizer:
             "sus": None,
             "alterations": [],
             "slash": None,
-            "UNCLEAR": [],
+            # "UNCLEAR": [],
         }
 
-        decomp_chord["raw_chord"] = chord
+        raw_chord = chord
 
         chord = chord.replace("(", "").replace(")", "")
 
@@ -415,8 +427,6 @@ class ChordCanonizer:
         root_capture = self.ROOT_REGEX.match(chord)
 
         if not root_capture:
-            decomp_chord["root"] = "X"
-            self._cached_tokens[decomp_chord.get("raw_chord")] = False
             return decomp_chord
 
         root = root_capture.group(0)
@@ -426,8 +436,6 @@ class ChordCanonizer:
         remainder = chord[len(root) :]
 
         tokens = self.SPLIT_REGEX.findall(remainder)
-        # TODO: Should numbers be tokenized individually? E.g. Aadd9(13) becomes "A", "add913", instead of "A", "add9", "13"
-        print(f"tokens : {tokens}")
 
         for token in tokens:
             token = token.strip()
@@ -436,16 +444,15 @@ class ChordCanonizer:
                 decomp_chord["adds"].append(token)
 
             elif token.startswith("sus"):
-                decomp_chord["sus"] = token
+                decomp_chord["sus"] = self.ALLOWED_QUALITIES[token]  # token
 
             elif token in self.ALLOWED_QUALITIES:
                 decomp_chord["quality"] = self.ALLOWED_QUALITIES[token]
 
+            elif token.startswith(("#", "b")):
+                decomp_chord["alterations"].append(token)
+
             elif self.EXTENSIONS_REGEX.match(token):
-                print(f"extensions match: {token}")
-                print(
-                    f"only 2,4,5,6,7,9,11,13 are allowed no compounded, e.g. 7913"
-                )
                 decomp_chord["extensions"].append(token)
 
             else:
@@ -454,16 +461,88 @@ class ChordCanonizer:
         return decomp_chord
 
     def _normalize(self, decomp_chord: dict) -> dict:
-        pass
+        # normalize quality default
+        if decomp_chord["quality"] is None:
+            decomp_chord["quality"] = ""
+
+        # normalize sus
+        # if decomp_chord["sus"] == "sus":
+        #     decomp_chord["sus"] = "sus4"
+
+        # normalize adds vs extensions
+        new_adds = []
+
+        for ext in decomp_chord["adds"]:
+            decomp_chord["adds"]
+            print(f"Line 467: {decomp_chord['adds']}")
+            if ext not in decomp_chord["extensions"]:
+                print(f"Line 470: {decomp_chord['extensions']}")
+                new_adds.append(ext)
+
+        decomp_chord["adds"] = sorted(set(new_adds), key=self._num_sort)
+
+        decomp_chord["extensions"] = sorted(
+            set(decomp_chord["extensions"]), key=self._num_sort
+        )
+
+        print(
+            f"Line 489: {sorted(set(decomp_chord['extensions']), key=self._num_sort)}"
+        )
+
+        decomp_chord["alterations"] = sorted(
+            set(decomp_chord["alterations"]), key=self._num_sort
+        )
+
+        print(
+            f"Line 492: {sorted(set(decomp_chord['alterations']), key=self._num_sort)}"
+        )
+
+        return decomp_chord
 
     def _reconstruct(self, decomp_chord: dict) -> str:
-        pass
+        if not decomp_chord["root"]:
+            return None
+
+        chord = decomp_chord["root"]
+
+        chord += decomp_chord["quality"]
+
+        if decomp_chord["sus"]:
+            chord += decomp_chord["sus"]
+
+        if decomp_chord["extensions"]:
+            # chord += "".join(decomp_chord["extensions"])
+            chord += max(decomp_chord["extensions"])
+
+        modifiers = []
+
+        modifiers.extend(decomp_chord["adds"])
+
+        modifiers.extend(decomp_chord["alterations"])
+
+        if modifiers:
+            chord += "(" + ",".join(modifiers) + ")"
+
+        if decomp_chord["slash"]:
+            chord += "/" + decomp_chord["slash"]
+
+        return chord
+
+    def _num_sort(self, x):
+        m = re.search(r"\d+", x)
+
+        if m:
+            return int(m.group())
+
+        return 999
 
 
-test = "Amaj7add9(13) E7(9)(13) E7 Asus2dim A(add9)/E".split(" ")
-
+# TODO: Create UNIT TESTS
 cc = ChordCanonizer()
 
-for c in test:
-    print(c)
-    print(cc._parse(c))
+test = "Emin Em EMaj Emaj Emaj7 E7M"
+test = "X X Em Em"
+test2 = "Amaj7add9add6(13) E7(9)(13) E7 Asus2dim A(add9)/E"
+
+res = cc.canonicalize(test)
+print(f"res : {res}")
