@@ -231,7 +231,7 @@ class ChordIsolator:
             token = self._erode(token)
 
             if not token:
-                print("Empty token")
+                # print("Empty token")
                 continue
 
             token = self._homogenize(token)
@@ -239,7 +239,7 @@ class ChordIsolator:
             cached = self._cached_tokens.get(token)
 
             if cached is not None:
-                print(f"{token} already in cache!")
+                # print(f"{token} already in cache!")
                 if cached:
                     chords.append(token)
                     continue
@@ -248,15 +248,15 @@ class ChordIsolator:
                     continue
 
             if self._reject(token):
-                print(f"{token} rejected!")
+                # print(f"{token} rejected!")
                 continue
 
             if self._validate(token):
-                print(f"{token} validated and cached!")
+                # print(f"{token} validated and cached!")
                 self._cached_tokens[token] = True
                 chords.append(token)
             else:
-                print(f"{token} added to cache as junk")
+                # print(f"{token} added to cache as junk")
                 self._cached_tokens[token] = False
 
         return chords
@@ -292,12 +292,11 @@ class ChordIsolator:
     def _reject(self, token: str) -> bool:
         """Predicate that rejects tokens that are too long or resemble tabs"""
         if len(token) >= self.char_threshold:
-            print(f"{token} too long")
+            # print(f"{token} too long")
             return True
 
         if re.match(r"^[A-G]{1}[#b]?[-|:\s]{1,2}", token):
-            print(f"{token} is a tab!")
-
+            # print(f"{token} is a tab!")
             return True
 
         return False
@@ -339,7 +338,7 @@ class ChordCanonizer:
         |dim
         |aug
         |m|min
-        |[#b]?(?:2|4|5|6|7|9|11|13)
+        |[#b+-]?(?:2|4|5|6|7|9|11|13){1}[#b+-]?
     """,
         re.VERBOSE,
     )
@@ -361,8 +360,8 @@ class ChordCanonizer:
         "sus2": "sus2",
     }
 
-    # TODO: needs accidentals at the end as well?
-    EXTENSIONS_REGEX = re.compile(r"[#b]?(?:2|4|5|6|7|9|11|13){1}")
+    # TODO: only accept accidentals at the end! Leading accidentals are not allowed currently
+    EXTENSIONS_REGEX = re.compile(r"(?:2|4|5|6|7|9|11|13){1}[#b+-]?")
 
     def __init__(self):
         self._cached_chords = {}
@@ -378,7 +377,7 @@ class ChordCanonizer:
                     chords_cleaned.append(chord)
 
             # Canonization
-            raw_decomposed_chord = self._parse(chord)
+            raw_decomposed_chord = self._decompose(chord)
             norm_decomposed_chord = self._normalize(raw_decomposed_chord)
             chord_cleaned = self._reconstruct(norm_decomposed_chord)
 
@@ -394,7 +393,7 @@ class ChordCanonizer:
         return chords_cleaned
 
     # Private Methods ----
-    def _parse(self, chord: str) -> dict:
+    def _decompose(self, chord: str) -> dict:
         decomp_chord = {
             "root": None,
             "quality": None,
@@ -403,10 +402,7 @@ class ChordCanonizer:
             "sus": None,
             "alterations": [],
             "slash": None,
-            # "UNCLEAR": [],
         }
-
-        raw_chord = chord
 
         chord = chord.replace("(", "").replace(")", "")
 
@@ -444,7 +440,7 @@ class ChordCanonizer:
                 decomp_chord["adds"].append(token)
 
             elif token.startswith("sus"):
-                decomp_chord["sus"] = self.ALLOWED_QUALITIES[token]  # token
+                decomp_chord["sus"] = self.ALLOWED_QUALITIES[token]
 
             elif token in self.ALLOWED_QUALITIES:
                 decomp_chord["quality"] = self.ALLOWED_QUALITIES[token]
@@ -465,37 +461,38 @@ class ChordCanonizer:
         if decomp_chord["quality"] is None:
             decomp_chord["quality"] = ""
 
-        # normalize sus
-        # if decomp_chord["sus"] == "sus":
-        #     decomp_chord["sus"] = "sus4"
-
         # normalize adds vs extensions
         new_adds = []
 
-        for ext in decomp_chord["adds"]:
-            decomp_chord["adds"]
+        for add in decomp_chord["adds"]:
             print(f"Line 467: {decomp_chord['adds']}")
-            if ext not in decomp_chord["extensions"]:
+            if add not in decomp_chord["extensions"]:
                 print(f"Line 470: {decomp_chord['extensions']}")
-                new_adds.append(ext)
+                new_adds.append(add)
 
         decomp_chord["adds"] = sorted(set(new_adds), key=self._num_sort)
 
+        # TODO: normalize sharp or flat extensions!!
+        extentensions = []
+
+        for ext in decomp_chord["extensions"]:
+            print(f"Line 483: {ext}")
+            if any(sym in ext for sym in {"#", "b", "-", "+"}):
+                print(f"Line 485: {ext} has an extra symbol")
+
         decomp_chord["extensions"] = sorted(
             set(decomp_chord["extensions"]), key=self._num_sort
-        )
-
-        print(
-            f"Line 489: {sorted(set(decomp_chord['extensions']), key=self._num_sort)}"
         )
 
         decomp_chord["alterations"] = sorted(
             set(decomp_chord["alterations"]), key=self._num_sort
         )
 
-        print(
-            f"Line 492: {sorted(set(decomp_chord['alterations']), key=self._num_sort)}"
-        )
+        # TODO: Aug handling? Potential issue: sharp extensions and aug can both be described using a "+"...
+        # Potential rule: Define common cases as C7+ as aug, since a sharp C7# is rather uncommon.
+        # C7+ >> Caug7
+        # C5+ >> Caug
+        # What to do about E7/9+ and G7/5+, these are quite common in the dataset
 
         return decomp_chord
 
@@ -529,6 +526,9 @@ class ChordCanonizer:
         return chord
 
     def _num_sort(self, x):
+        """
+        Sort modifiers lists like `["add9", "add2", "add13"]`
+        """
         m = re.search(r"\d+", x)
 
         if m:
@@ -542,7 +542,9 @@ cc = ChordCanonizer()
 
 test = "Emin Em EMaj Emaj Emaj7 E7M"
 test = "X X Em Em"
+test = "D7(9-)/Eb"
 test2 = "Amaj7add9add6(13) E7(9)(13) E7 Asus2dim A(add9)/E"
+
 
 res = cc.canonicalize(test)
 print(f"res : {res}")
