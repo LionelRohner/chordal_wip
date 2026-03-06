@@ -75,17 +75,17 @@ class KeyPredictor:
         )
 
 
-progression = "Dm Dm A7 G7 Dm Dm A7 G7 Bm A G A Dm Dm A7 G7 Bm A G A Dm Dm A7 G7 Bm A G A Dm"
-
-# progression = "Cmaj Gmaj Am Fmaj Cmaj Fmaj Cmaj Fmaj Cmaj Gmaj Am Fmaj"
-reference = scales.get_ref_scales()
-kp = KeyPredictor(progression, reference)
-
-print(kp)
-exit()
-actual_key = f"{kp['key']} {kp['mode']}"
-print(f"actual_key : {actual_key}")
-expected_key = "C ionian"
-print(f"expected_key : {expected_key}")
-
-print(actual_key == expected_key)
+# progression = "Dm Dm A7 G7 Dm Dm A7 G7 Bm A G A Dm Dm A7 G7 Bm A G A Dm Dm A7 G7 Bm A G A Dm"
+#
+# # progression = "Cmaj Gmaj Am Fmaj Cmaj Fmaj Cmaj Fmaj Cmaj Gmaj Am Fmaj"
+# reference = scales.get_ref_scales()
+# kp = KeyPredictor(progression, reference)
+#
+# print(kp)
+# exit()
+# actual_key = f"{kp['key']} {kp['mode']}"
+# print(f"actual_key : {actual_key}")
+# expected_key = "C ionian"
+# print(f"expected_key : {expected_key}")
+#
+# print(actual_key == expected_key)
