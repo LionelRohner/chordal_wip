@@ -1,9 +1,10 @@
 from datasets import load_dataset
 import pandas as pd
 import re
-from chordal_wip.chordcleaner import ChordCleaner
+from chordal_wip.chordcleaner import ChordCleaner, ChordIsolator
 
 cc = ChordCleaner(freq_threshold=3)
+cc = ChordIsolator()
 
 ds = load_dataset("lluccardoner/melodyGPT-song-chords-text-1")
 
@@ -16,10 +17,18 @@ ds = ds[ds["chords_str"].notna()]
 
 series = ds["chords_str"]
 
-ds["chords_str_clean"] = cc.clean(series)
+if False:
+    ds["chords_str_clean"] = cc.clean(series)
 
-# ds.iloc[8888:9888].to_csv("test.csv")
-# exit()
+
+ds["chords_str_clean"] = series.apply(cc.raw_chord_isolation)
+
+cnts = ds["chords_str_clean"].str.split().explode().value_counts()
+
+cnts = cnts[cnts.index.str.contains("[+-]+")]
+
+cnts.to_csv("test_cnts.csv")
+
 
 # TODO: Move into ChordCleaner
 unique_words = ds["chords_str_clean"].str.split().explode().drop_duplicates()
