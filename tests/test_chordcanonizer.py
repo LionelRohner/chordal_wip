@@ -11,9 +11,10 @@ def test_decompose_1():
     expected = {
         "root": "Eb",
         "quality": "maj",
-        "extensions": ["7"],
         "adds": ["add9"],
         "sus": None,
+        "dominant": None,
+        "extensions": ["7"],
         "alterations": [],
         "slash": "G",
         "unclear": [],
@@ -21,10 +22,10 @@ def test_decompose_1():
     assert actual == expected, f"Expected {expected}, got {actual}"
 
 
-def test_decompose_2():
+def test_edge_cases_1():
     test = "E13-"
 
-    actual = cc._canonicalize(test)
+    actual = cc.canonicalize(test)
     expected = "Em13"
 
     assert actual == expected, f"Expected {expected}, got {actual}"
@@ -52,7 +53,7 @@ def test_canonicalize_triads():
     test = "Emin Em EMaj Emaj EM"
 
     actual = cc.canonicalize(test)
-    expected = "Em Em E E E"
+    expected = "E(q:m) E(q:m) E(q:maj) E(q:maj) E(q:maj)"
 
     assert actual == expected, f"Expected {expected}, got {actual}"
 
@@ -61,7 +62,7 @@ def test_canonicalize_aug():
     test = "C5+ C+5 C7+ Caug C+"
 
     actual = cc.canonicalize(test)
-    expected = "C(a:#5) C5(a:#5) C7(a:#5) C(a:#5) C(a:#5)"
+    expected = "C(a:#5) C(e:5)(a:#5) C(d:True)(e:7)(a:#5) C(a:#5) C(a:#5)"
 
     assert actual == expected, f"Expected {expected}, got {actual}"
 
@@ -75,16 +76,16 @@ def test_canonicalize_7th():
     test = "Emaj7 Emin7 Em7 E7M EM7 E7"
 
     actual = cc.canonicalize(test)
-    expected = "Emaj7 Em7 Em7 Emaj7 Emaj7 E7"
+    expected = "E(q:maj)(e:7) E(q:m)(e:7) E(q:m)(e:7) E(q:maj)(e:7) E(q:maj)(e:7) E(d:True)(e:7)"
 
     assert actual == expected, f"Expected {expected}, got {actual}"
 
 
 def test_canonicalize_7th_2():
-    test = "Gmaj9 Gmaj7 Gmaj7(9+)"
+    test = "Gmaj9 Gmaj7 Gmaj7(9+) G9"
 
     actual = cc.canonicalize(test)
-    expected = "Gmaj9 Gmaj7 Gmaj7(e:#9)"
+    expected = "G(q:maj)(e:9) G(q:maj)(e:7) G(q:maj)(e:7,#9) G(d:True)(e:9)"
 
     assert actual == expected, f"Expected {expected}, got {actual}"
 
@@ -93,7 +94,7 @@ def test_canonicalize_extensions():
     test = "C7/9- C9#11b13 C911+13-"
 
     actual = cc.canonicalize(test)
-    expected = "C7(e:b9) C9(e:#11,b13) C9(e:#11,b13)"
+    expected = "C(d:True)(e:7,b9) C(d:True)(e:9,#11,b13) C(d:True)(e:9,#11,b13)"
 
     assert actual == expected, f"Expected {expected}, got {actual}"
 
@@ -108,10 +109,10 @@ def test_canonicalize_extensions_edge_cases():
 
     actual = cc.canonicalize(test)
     expected_list = [
-        "C7(u:-9)",  # Leading "-" is not expected in token splitting criteria
-        "C7(e:b9)",  # Correctly interpreted because of slash handling
-        "C7(e:#9)",  # Same as above
-        "C9(e:11,#13)",  # Trailing # or b are not expected, hence it favors #13 instead of 11# and 13b.
+        "C(d:True)(e:7)(u:-9)",  # Leading "-" is not expected in token splitting criteria
+        "C(d:True)(e:7,b9)",  # Correctly interpreted because of slash handling
+        "C(d:True)(e:7,#9)",  # Same as above
+        "C(d:True)(e:9,11,#13)",  # Trailing # or b are not expected, hence it favors #13 instead of 11# and 13b.
     ]
     expected = " ".join(expected_list)
 
