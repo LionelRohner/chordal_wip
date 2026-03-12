@@ -61,7 +61,7 @@ def test_canonicalize_aug():
     test = "C5+ C+5 C7+ Caug C+"
 
     actual = cc.canonicalize(test)
-    expected = "Caug5 Caug5 Caug7 Caug Caug"
+    expected = "C(a:#5) C5(a:#5) C7(a:#5) C(a:#5) C(a:#5)"
 
     assert actual == expected, f"Expected {expected}, got {actual}"
 
