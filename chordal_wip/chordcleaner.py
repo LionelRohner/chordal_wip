@@ -317,6 +317,10 @@ class ChordCanonizer:
     # Pattern recognition ----
     ROOT_REGEX = re.compile(r"[A-G](?:#|b)?")
 
+    MAJOR_TRIAD_REGEX = re.compile(r"(M|Maj|maj)$")
+
+    EXTENSIONS_REGEX = re.compile(r"[#b]?(?:2|4|5|6|7|9|11|13){1}[+-]?")
+
     SPLIT_REGEX = re.compile(
         r"""
         \([^)]*\)
@@ -327,55 +331,57 @@ class ChordCanonizer:
         |aug|\+
         |m|min
         |[#b]?(?:2|4|5|6|7|9|11|13){1}[+-]?
-    """,
+        """,
         re.VERBOSE,
     )
-
-    MAJOR_TRIAD_REGEX = re.compile(r"(M|Maj|maj)$")
 
     ALLOWED_QUALITIES = {
         "min": "m",
         "m": "m",
         "-": "m",
         "maj": "maj",
-        # "Maj": "",
-        # "M": "maj7",
-        # TODO: should 7th chords be handled in extensions?
-        # "maj7": "maj7",
-        "7M": "maj7",
-        "M7": "maj7",
+        "7M": "maj7",  # TODO: Special rule?
+        "M7": "maj7",  # TODO: Special rule?
         "dim": "dim",
         "aug": "aug",
         "+": "aug",
-        "7+": "aug7",
-        "5+": "aug5",  # TODO: Wise?
+        # "7+": "aug7",
+        # "5+": "aug5",  # TODO: Wise?
         "sus": "sus4",
         "sus4": "sus4",
         "sus2": "sus2",
     }
 
-    # TODO: only accept accidentals at the end! Leading accidentals are not allowed currently
-    EXTENSIONS_REGEX = re.compile(r"[#b]?(?:2|4|5|6|7|9|11|13){1}[+-]?")
+    EDGE_CASES = {"E13-": "Em13"}
 
     def __init__(self):
+        # TODO: Merge caches somehow!
         self._cached_chords = {}
 
     # Public Method ----
-    def canonicalize(self, txt: str):
+    def canonicalize(self, txt: str, save_cache: bool = False):
         chords = txt.split(" ")
         chords_cleaned = []
 
         for chord in chords:
             print(f"chord: {chord} -----------------------")
+
             if chord in self._cached_chords:
                 if self._cached_chords[chord]:
                     chords_cleaned.append(chord)
                     continue
 
-            # Canonization
-            raw_decomposed_chord = self._decompose(chord)
-            norm_decomposed_chord = self._normalize(raw_decomposed_chord)
-            chord_cleaned = self._reconstruct(norm_decomposed_chord)
+            if chord in self.EDGE_CASES:
+                print(f"chord {chord} is an edge case!")
+                chord_cleaned = self.EDGE_CASES[chord]
+            else:
+                # Canonization
+                raw_decomposed_chord = self._decompose(chord)
+                print(f"raw_decomposed_chord : {raw_decomposed_chord}")
+                norm_decomposed_chord = self._normalize(raw_decomposed_chord)
+                print(f"norm_decomposed_chord : {norm_decomposed_chord}")
+                chord_cleaned = self._reconstruct(norm_decomposed_chord)
+                print(f"chord_cleaned : {chord_cleaned}")
 
             if not chord_cleaned:
                 self._cached_chords[chord] = False
@@ -386,8 +392,11 @@ class ChordCanonizer:
             print(f"END chord: {chord} -----------------------")
             chords_cleaned.append(chord_cleaned)
 
-        print(self._cached_chords)
-        return chords_cleaned
+        # TODO: How to preserve the cache?
+        if save_cache:
+            print(self._cached_chords)
+
+        return " ".join(chords_cleaned)
 
     # Private Methods ----
     def _decompose(self, chord: str) -> dict:
@@ -418,9 +427,7 @@ class ChordCanonizer:
             if self.ROOT_REGEX.match(slash_bass_candidate):
                 decomp_chord["slash"] = slash_bass_candidate
             else:
-                # decomp_chord["adds"].append(slash_bass_candidate)
                 tokens.append(slash_bass_candidate)
-                print(f"Line 428: {tokens}")
 
         # Root handling
         root_capture = self.ROOT_REGEX.match(chord)
@@ -443,7 +450,6 @@ class ChordCanonizer:
 
         for token in tokens:
             token = token.strip()
-            print(f"token : {token}")
 
             if token.startswith("add"):
                 decomp_chord["adds"].append(token)
@@ -454,7 +460,7 @@ class ChordCanonizer:
             elif token in self.ALLOWED_QUALITIES:
                 decomp_chord["quality"] = self.ALLOWED_QUALITIES[token]
 
-            # TODO: Still needed?
+            # # TODO: Still needed?
             # elif token.startswith(("#", "b")):
             #     print(f"ALTERATIONS token : {token}")
             #     decomp_chord["alterations"].append(token)
@@ -471,42 +477,48 @@ class ChordCanonizer:
 
     def _normalize(self, decomp_chord: dict) -> dict:
         # normalize quality default
+        # TODO: Is this needed?
         if decomp_chord["quality"] is None:
             decomp_chord["quality"] = ""
 
-        # normalize adds vs extensions
-        new_adds = []
+        if decomp_chord["quality"] == "aug":
+            decomp_chord["quality"] = ""
+            decomp_chord["alterations"].append("#5")
 
+        # normalize adds
+        new_adds = []
         for add in decomp_chord["adds"]:
             if add not in decomp_chord["extensions"]:
                 new_adds.append(add)
-
         decomp_chord["adds"] = sorted(set(new_adds), key=self._num_sort)
 
-        # TODO: normalize sharp or flat extensions!!
+        # normalize extensions
         new_extensions = []
-
+        alterations = []
         for ext in decomp_chord["extensions"]:
+            print(f"ext: {ext}")
+            if ext == "7+":
+                new_extensions.append("7")
+                alterations.append("#5")
+                continue
+
+            if ext == "5+":
+                alterations.append("#5")
+                continue
+
             ext = ext.replace("-", "b").replace("+", "#")
-            print(f"ext : {ext}")
             if "#" in ext or "b" in ext:
                 if ext[-1] in "#b":
                     ext = ext[-1] + ext[:-1]
-                    print(f"ext : {ext}")
 
             new_extensions.append(ext)
-
-        # for ext in decomp_chord["extensions"]:
-        #     if any(sym in ext for sym in {"-", "+"}):
-        #         ext = ext.replace("-", "b").replace("+", "#")
-        #     new_extensions.append(ext)
 
         decomp_chord["extensions"] = sorted(
             set(new_extensions), key=self._num_sort
         )
 
         decomp_chord["alterations"] = sorted(
-            set(decomp_chord["alterations"]), key=self._num_sort
+            set(alterations + decomp_chord["alterations"]), key=self._num_sort
         )
 
         return decomp_chord
@@ -524,6 +536,7 @@ class ChordCanonizer:
 
         extensions = decomp_chord["extensions"]
         if extensions:
+            # TODO: Put all extensions in the same block and reformat later on!
             chord += extensions[0]
             if len(extensions) > 1:
                 chord += "(e:" + ",".join(extensions[1:]) + ")"
@@ -559,21 +572,35 @@ class ChordCanonizer:
         return 999
 
 
-cc = ChordCanonizer()
+class ChordFormatter:
+    def __init__(self, verbose_chord):
+        self.tidy_chord = self.tidy_up(verbose_chord)
 
-# test2 = "Ebmaj7add9/G"
-# TODO: Need for special rules? E.g. E13- is typically Em13 and not E13b
-# Same applies to M7 and 7M
-test2 = "E7/13- E13-"
+    def tidy_up(self):
+        pass
+
+
+# TODO: Check if aug works fine now and add  tests for sus/aug/slash!!
+# TODO: Check if aug works fine now and add  tests for sus/aug/slash!!
+# TODO: Check if aug works fine now and add  tests for sus/aug/slash!!
+# TODO: Check if aug works fine now and add  tests for sus/aug/slash!!
+# TODO: Check if aug works fine now and add  tests for sus/aug/slash!!
+# TODO: Check if aug works fine now and add  tests for sus/aug/slash!!
+# TODO: Check if aug works fine now and add  tests for sus/aug/slash!!
+# TODO: Check if aug works fine now and add  tests for sus/aug/slash!!
+# TODO: Check if aug works fine now and add  tests for sus/aug/slash!!
+
+cc = ChordCanonizer()
 
 
 # Extensions vs Add test
-test = "A7(13)add9"
+test2 = "Eb7+/9 Eb7+(9)"
 
-test = "Amaj7add9add6(13)"  #  E7(9)(13) E7 Asus2dim A(add9)/E"
+test2 = "C5+ C+5 C7+ Caug C+"
+# test2 = "Amaj7add9add6(13)"  #  E7(9)(13) E7 Asus2dim A(add9)/E"
 
-# TODO: Why are these accepted although the splitting criteria does not allow it?
-test2 = "C7/9b C7/9#"
 
-res = cc.canonicalize(test2)
+# test2 = "C7/9- C9#11b13 C911+13-"
+# test2 = "E13-"
+res = cc.canonicalize(test2, save_cache=True)
 print(f"res : {res}")
