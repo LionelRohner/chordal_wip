@@ -385,12 +385,16 @@ class ChordCanonizer:
                 self._cached_chords[chord_cleaned] = True
             chords_cleaned.append(chord_cleaned)
 
-        # TODO: How to preserve the cache?
-        if save_cache:
-            print(self._cached_chords)
-
-        # TODO: Unpack cache as well!
+        print(self._cached_chords)
         return " ".join(chords_cleaned)
+
+    def save_cache(self):
+        df = pd.DataFrame.from_dict(
+            self._cached_chords, orient="index", columns=["value"]
+        )
+        df.index.name = "chord"
+        df.reset_index(inplace=True)
+        df.to_csv("cache.csv")
 
     # Private Methods ----
     def _decompose(self, chord: str) -> dict:
