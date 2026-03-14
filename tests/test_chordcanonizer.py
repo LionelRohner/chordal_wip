@@ -71,9 +71,7 @@ def test_canonicalize_sus():
     test = "Csus Csus2 Csus4 Csus9 Csus/E"
 
     actual = cc.canonicalize(test)
-    expected = (
-        "C(s:sus4) C(s:sus2) C(s:sus4) C(s:sus4)(d:True)(e:9) C(s:sus4)/E"
-    )
+    expected = "C(s:sus4) C(s:sus2) C(s:sus4) C(s:sus4)(e:9) C(s:sus4)/E"
 
     assert actual == expected, f"Expected {expected}, got {actual}"
 
@@ -87,7 +85,6 @@ def test_canonicalize_dim():
     assert actual == expected, f"Expected {expected}, got {actual}"
 
 
-@pytest.mark.skip("Figure out dominant issue!!")
 def test_canonicalize_slash():
     test = "E#/Cb E#7/9/Cb C/D Ebsus4(7)/C#"
 
