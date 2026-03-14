@@ -267,7 +267,17 @@ class ChordCanonizer:
         return all_keys_empty
 
     def _is_dominant(self, d: dict):
+        """
+        Check if a (decomposed) chord qualifies as a dominant chord.
+            - Major chords do not qualify as dominant, because the 7th is not minor.
+            - Minor chords do not qualify as dominant, because the 3rd is not major.
+            - Diminished chord do not qualify as dominant, because the 5th is diminished.
+            - Suspended chord do not qualify as dominant, because they are lacking a 3rd.
+        """
         if d["quality"] in ["maj", "m", "dim"]:
+            return False
+
+        if d["sus"]:
             return False
 
         has_seventh = any(
@@ -290,11 +300,3 @@ class ChordFormatter:
             extensions_formatted += extensions[0]
             if len(extensions) > 1:
                 extensions_formatted += "(e:" + ",".join(extensions[1:]) + ")"
-
-
-cc = ChordCanonizer()
-test = pd.Series(["Ebsus4(7)/C# E#7/9/Cb"])
-# TODO: Decide whether dominant can be
-res = test.apply(cc.canonicalize)
-# cc.save_cache()
-# print(f"out : {res}")
