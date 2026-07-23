@@ -1,10 +1,10 @@
-from pytest import approx
 import chordal_wip.scales as scales
 import pandas as pd
+from collections import Counter
+from scipy.sparse import csr_matrix
+import numpy as np
 
 
-# TODO: This is very slow
-# TODO: This is very slow
 # TODO: This is very slow
 # TODO: This is very slow
 # TODO: This is very slow
@@ -14,53 +14,64 @@ class KeyPredictor:
     A class for predicting key from a chord progression.
     """
 
-    def __init__(self):  # , reference: pd.DataFrame):
+    def __init__(self):
+        # Reference containing scale definition for all keys
         self.reference = scales.get_ref_scales()
-        # Weight-matrix of all scales (rows) and all chords (cols)
+
+        # Weight-matrix of all scales (rows) and all chords (cols) >> very sparse
         self.weights_df = pd.DataFrame.from_records(
             self.reference["chord_weights"]
-        )
+        ).fillna(0)  # Convert NaN to 0 for weight mat mult
+
+        # Init pre-allocated arrays for chord proportion computation
+        self.chord_columns = self.weights_df.columns
+        self.chord_to_idx = {
+            chord: idx for idx, chord in enumerate(self.chord_columns)
+        }
+        self.len_prop_vector = len(self.chord_columns)
+
+        # Sparse matrix only stores position of non-zero values
+        self.weights_sparse = csr_matrix(self.weights_df.values)
+        self.n_scales = len(self.reference)
 
     # Public methods
     def predict_key(self, chords: str) -> str:
-        # TODO: The chords itself will also come as a Panda Series
+        chord_list = chords.split()
+
+        if not chord_list:
+            return None
+
+        n_chords = len(chord_list)
+        counts = Counter(chord_list)
+
+        # Build proportion vector
+        prop_vector = np.zeros(self.len_prop_vector)
+        for chord, count in counts.items():
+            if chord in self.chord_to_idx:
+                prop_vector[self.chord_to_idx[chord]] = count / n_chords
+
+        # Compute scores
+        scores = self.weights_sparse.dot(prop_vector)
+        max_score_idx = np.argmax(scores)
+
+        ref_max = self.reference.iloc[max_score_idx]
+        return f"{ref_max['key']} {ref_max['mode']}"
+
+    # OLD AND SLOW
+    def predict_key2(self, chords: str) -> str:
         chords = pd.Series(chords.split(" "))
-        # [chord for chord in chord_lst if "/" not in chord]
 
         n_chords = len(chords)
         counts = chords.value_counts(ascending=False)
         proportions = counts / n_chords
 
-        self._integrity_proportions(proportions)
-
         # Multiply chord proportions by weights of all scales (only matching chords)
         scores = (self.weights_df.mul(proportions, axis=1)).sum(axis=1)
 
-        # TODO: What about ties?
+        # Note: In case of ties, the first idx is considered
         max_score_idx = scores.idxmax()
         ref_max = self.reference.loc[max_score_idx, ["key", "mode"]]
         return f"{ref_max['key']} {ref_max['mode']}"
 
-    # Private methods
-    # TODO: RM once slash handling is clear!
-    def _integrity_proportions(self, proportions: pd.Series):
-        sum_to_one = proportions.sum()
-
-        if sum_to_one != approx(1.0):
-            raise ValueError(f"Proportions do not sum to 1, got {sum_to_one}")
-
     def __str__(self):
         return f"Chord Progression:\n{self.reference}"
-
-
-# progression = pd.DataFrame(
-#     {
-#         "chords": [
-#             "Cmaj Gmaj Am",
-#             "Fmaj Cmaj Fmaj Cmaj",
-#             "Fmaj Cmaj Gmaj Am Fmaj",
-#         ]
-#     }
-# )
-# kp2 = KeyPredictor()
-# print(progression["chords"].apply(kp2.predict_key))
