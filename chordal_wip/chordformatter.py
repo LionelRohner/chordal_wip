@@ -44,18 +44,20 @@ class ChordFormatter:
         pass
 
 
-import pandas as pd
-
-# TODO: What about augmented?
-cf = ChordFormatter()
-chords = pd.DataFrame(
-    {
-        "chords": [
-            "C#(q3:m)/A F#(q3:maj)/F G#(q3:m) C#(q3:m)",
-            "F#(q3:maj) G#(q3:m) C#(q3:m) F#(q3:maj) G#(q3:m)",
-            "C#(q3:m) F#(q3:maj) G#(q3:m) C#(q3:m) F#(q3:maj)",
-            "G#(q3:sus2) C#(q3:m) F#(q3:maj) G#(q3:m) C#(q3:m)",
-        ]
-    }
-)
-print(chords["chords"].apply(cf.format))
+# import pandas as pd
+#
+# cf = ChordFormatter()
+# chords = pd.DataFrame(
+#     {
+#         "chords": [
+#             "C#(q3:m)/A F#(q3:maj)/F G#(q3:m)",
+#             "F(q3:maj)(q5:aug)(q7:m)",
+#             "G#(q3:sus2) G#(q3:m) C#(q3:m)",
+#         ]
+#     }
+# )
+#
+# actual_simplified = chords["chords"].apply(cf.format)
+# print(f"actual_simplified : {actual_simplified}")
+# expected_simplified = pd.Series(["C#m F#maj G#m C#m", "Fmaj", "G#maj G#m C#m"])
+# print(f"expected_simplified : {expected_simplified}")

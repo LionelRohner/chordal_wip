@@ -28,6 +28,9 @@ class ChordProcessingPipeline:
     def process(
         self, df: pd.DataFrame, input_column: str, write_cache: bool = False
     ) -> pd.DataFrame:
+        # TODO: BOILERPLATE CODE!!
+        # TODO: How can this be modularized
+
         # Isolation ----
         start_time = time.time()
         self._print_header("Chord Isolator", "CPP: Starting isolation...")

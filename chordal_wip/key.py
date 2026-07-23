@@ -5,10 +5,6 @@ from scipy.sparse import csr_matrix
 import numpy as np
 
 
-# TODO: This is very slow
-# TODO: This is very slow
-# TODO: This is very slow
-# TODO: This is very slow
 class KeyPredictor:
     """
     A class for predicting key from a chord progression.
@@ -75,3 +71,8 @@ class KeyPredictor:
 
     def __str__(self):
         return f"Chord Progression:\n{self.reference}"
+
+
+# kp = KeyPredictor()
+# progression = "Dm Dm Amaj Gmaj Dm Dm Amaj Gmaj Bm Amaj Gmaj Amaj Dm Dm Amaj Gmaj Bm Amaj Gmaj Amaj Dm Dm Amaj Gmaj Bm Amaj Gmaj Amaj Dm"
+# print(kp.predict_key(progression))

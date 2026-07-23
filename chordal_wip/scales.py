@@ -6,12 +6,6 @@ from chordal_wip.helpers import rotate_list
 
 
 # TODO: Reconsider choice of objects for data
-
-
-# TODO: Remove unicode characters and consistent use of qualities (e.g. min > m)
-# TODO: Remove unicode characters and consistent use of qualities (e.g. min > m)
-# TODO: Remove unicode characters and consistent use of qualities (e.g. min > m)
-# TODO: Remove unicode characters and consistent use of qualities (e.g. min > m)
 # TODO: Remove unicode characters and consistent use of qualities (e.g. min > m)
 class Scale:
     """
@@ -26,7 +20,9 @@ class Scale:
     DIATONIC_INTERVALS = np.array([2, 2, 1, 2, 2, 2, 1])
     SCALES_DICT = {
         "ionian": DIATONIC_INTERVALS,
-        "dorian": rotate_list(DIATONIC_INTERVALS, 1),
+        "dorian": rotate_list(DIATONIC_IN
+│   ├── test_chordcanonizer.py
+TERVALS, 1),
         "phrygian": rotate_list(DIATONIC_INTERVALS, 2),
         "lydian": rotate_list(DIATONIC_INTERVALS, 3),
         "mixolydian": rotate_list(DIATONIC_INTERVALS, 4),
