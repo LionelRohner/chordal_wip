@@ -20,9 +20,7 @@ class Scale:
     DIATONIC_INTERVALS = np.array([2, 2, 1, 2, 2, 2, 1])
     SCALES_DICT = {
         "ionian": DIATONIC_INTERVALS,
-        "dorian": rotate_list(DIATONIC_IN
-│   ├── test_chordcanonizer.py
-TERVALS, 1),
+        "dorian": rotate_list(DIATONIC_INTERVALS, 1),
         "phrygian": rotate_list(DIATONIC_INTERVALS, 2),
         "lydian": rotate_list(DIATONIC_INTERVALS, 3),
         "mixolydian": rotate_list(DIATONIC_INTERVALS, 4),
